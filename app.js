@@ -70,6 +70,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (document.querySelector("#game-form")) {
     initGamePage();
   }
+
+  if (document.querySelector("#player-select")) {
+    initPlayerStatsPage();
+  }
 });
 
 function initHomePage() {
@@ -310,6 +314,7 @@ async function initGamePage() {
       calculateResults(formNode, gameKey, Number(chipsRateInput?.value || DEFAULT_CHIPS_PER_EURO));
       const results = collectEndResults(formNode);
       await endSubGame(roomCode, gameKey, results);
+      updatePlayerGameHistory(roomCode, gameKey, results);
       setStatus(statusNode, `${GAME_LABELS[gameKey]} terminato.`, false);
     } catch (error) {
       setStatus(statusNode, error.message, true);
@@ -317,6 +322,177 @@ async function initGamePage() {
       finishButton.disabled = false;
     }
   });
+}
+
+function updatePlayerGameHistory(roomCode, gameKey, results) {
+  const storageKey = `serata-casino-games-${roomCode}`;
+  const history = JSON.parse(localStorage.getItem(storageKey) || "{}");
+
+  Object.entries(results).forEach(([playerName, result]) => {
+    if (!history[playerName]) {
+      history[playerName] = {};
+    }
+    if (!history[playerName][gameKey]) {
+      history[playerName][gameKey] = { played: 0, won: 0, lost: 0 };
+    }
+    history[playerName][gameKey].played += 1;
+    if (result > 0) {
+      history[playerName][gameKey].won += 1;
+    } else if (result < 0) {
+      history[playerName][gameKey].lost += 1;
+    }
+  });
+
+  localStorage.setItem(storageKey, JSON.stringify(history));
+}
+
+function getPlayerGameHistory(roomCode, playerName) {
+  const storageKey = `serata-casino-games-${roomCode}`;
+  const history = JSON.parse(localStorage.getItem(storageKey) || "{}");
+  return history[playerName] || {};
+}
+
+let currentRoomCode = null;
+
+async function initPlayerStatsPage() {
+  const selectNode = document.querySelector("#player-select");
+  const contentNode = document.querySelector("#player-stats-content");
+  const emptyNode = document.querySelector("#player-stats-empty");
+  const statusNode = document.querySelector("#player-stats-status");
+  const roomCodeNode = document.querySelector("#player-stats-room-code");
+  const roomStateNode = document.querySelector("#player-stats-room-state");
+
+  if (hasPlaceholderConfig) {
+    setStatus(statusNode, "Firebase config missing.", true);
+    return;
+  }
+
+  currentRoomCode = await resolveCurrentRoom();
+  if (!currentRoomCode) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  let currentRoomData = null;
+
+  attachRoomWatcher(currentRoomCode, (room) => {
+    currentRoomData = room;
+    roomCodeNode.textContent = currentRoomCode;
+    setRoomBadge(
+      roomStateNode,
+      room.status === "ended" ? "Chiusa" : "Attiva",
+      room.status
+    );
+
+    populatePlayerSelectForStats(selectNode, room.playersList);
+
+    const selectedPlayer = selectNode.value;
+    if (selectedPlayer && room.players[selectedPlayer]) {
+      contentNode.hidden = false;
+      emptyNode.hidden = true;
+      renderPlayerStats(selectedPlayer, room, currentRoomCode);
+    } else {
+      contentNode.hidden = true;
+      emptyNode.hidden = false;
+    }
+  }, statusNode);
+
+  selectNode.addEventListener("change", () => {
+    const selectedPlayer = selectNode.value;
+    if (selectedPlayer && currentRoomData && currentRoomData.players[selectedPlayer]) {
+      contentNode.hidden = false;
+      emptyNode.hidden = true;
+      renderPlayerStats(selectedPlayer, currentRoomData, currentRoomCode);
+    } else {
+      contentNode.hidden = true;
+      emptyNode.hidden = false;
+    }
+  });
+}
+
+function populatePlayerSelectForStats(select, players) {
+  const currentValue = select.value;
+  select.innerHTML = `
+    <option value="">-- Seleziona un giocatore --</option>
+    ${players.map((player) => `<option value="${escapeHtml(player)}">${escapeHtml(player)}</option>`).join("")}
+  `;
+
+  if (players.includes(currentValue)) {
+    select.value = currentValue;
+  }
+}
+
+function renderPlayerStats(playerName, room, roomCode) {
+  const generalRanking = buildMainRanking(room.players || {});
+  const playerIndex = generalRanking.findIndex((p) => p.name === playerName);
+  const generalPosition = playerIndex >= 0 ? playerIndex + 1 : null;
+
+  document.getElementById("general-position").textContent = generalPosition ? `#${generalPosition}` : "-";
+
+  const playerLedger = room.players[playerName];
+  document.getElementById("player-total").textContent = currencyFormatter.format(playerLedger.total);
+  document.getElementById("player-locked").textContent = currencyFormatter.format(playerLedger.locked);
+  document.getElementById("player-available").textContent = currencyFormatter.format(playerLedger.available);
+
+  const gameHistory = getPlayerGameHistory(roomCode || "", playerName);
+
+  const microRankings = {};
+  GAME_KEYS.forEach((gameKey) => {
+    const ranking = buildMiniRanking(room.players || {}, gameKey);
+    const pos = ranking.findIndex((p) => p.name === playerName);
+    microRankings[gameKey] = pos >= 0 ? pos + 1 : null;
+  });
+
+  document.getElementById("position-poker").textContent = microRankings.poker ? `#${microRankings.poker}` : "-";
+  document.getElementById("position-blackjack").textContent = microRankings.blackjack ? `#${microRankings.blackjack}` : "-";
+  document.getElementById("position-horse_racing").textContent = microRankings.horse_racing ? `#${microRankings.horse_racing}` : "-";
+  document.getElementById("position-roulette").textContent = microRankings.roulette ? `#${microRankings.roulette}` : "-";
+
+  renderGamesHistory(room, playerName, gameHistory);
+}
+
+function renderGamesHistory(room, playerName, gameHistory) {
+  const container = document.getElementById("games-history-list");
+  const gamesData = gameHistory[playerName] || {};
+
+  const hasGames = Object.values(gamesData).some((data) => data.played > 0);
+
+  if (!hasGames) {
+    container.innerHTML = '<p class="no-games-message">Nessun gioco disputato</p>';
+    return;
+  }
+
+  container.innerHTML = GAME_KEYS
+    .filter((gameKey) => gamesData[gameKey] && gamesData[gameKey].played > 0)
+    .map((gameKey) => {
+      const data = gamesData[gameKey];
+      const netResult = room.players[playerName]?.games?.[gameKey] || 0;
+      return `
+        <article class="game-history-card">
+          <div class="game-history-header">
+            <h3>${GAME_LABELS[gameKey]}</h3>
+            <span class="game-net-result ${netResult >= 0 ? "positive" : "negative"}">
+              ${netResult >= 0 ? "+" : ""}${currencyFormatter.format(netResult)}
+            </span>
+          </div>
+          <div class="game-history-stats">
+            <div class="stat-item">
+              <span class="stat-value">${data.played}</span>
+              <span class="stat-label">Giocati</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">${data.won}</span>
+              <span class="stat-label">Vinti</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">${data.lost}</span>
+              <span class="stat-label">Persi</span>
+            </div>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
 }
 
 function attachRoomWatcher(roomCode, onRoomUpdate, statusNode) {
