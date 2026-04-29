@@ -977,7 +977,7 @@ textarea:focus {
   font-weight: 800;
   font-size: 1.44rem;
   min-width: 20px;
-  text-align: left;
+  text-align: center;
   padding-right: 0;
 }
 
@@ -985,8 +985,8 @@ textarea:focus {
   flex: 1;
   font-weight: 600;
   font-size: 1.32rem;
-  padding-left: 0;
-  margin-left: -5px;
+  padding-left: 2px;
+  margin-left: -8px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
