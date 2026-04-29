@@ -554,7 +554,12 @@ textarea:focus {
   align-items: stretch;
   overflow: visible;
   box-shadow: none;
-  border-radius: 0;
+}
+
+.ranking-row.top-1,
+.ranking-row.top-2,
+.ranking-row.top-3 {
+  border-radius: 50px 50px 50px 50px;
 }
 
 .ranking-left {
@@ -610,7 +615,11 @@ textarea:focus {
   gap: 2px;
   flex: 1;
   min-width: 0;
-  padding-left: 16px;
+  padding-left: 20px;
+}
+
+.ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-name {
+  padding-left: 20px;
 }
 
 .ranking-row h2 {
@@ -715,15 +724,16 @@ textarea:focus {
 }
 
 .ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-position {
-  background: #000000;
+  display: none;
 }
 
 .ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-bar {
-  background: #000000;
+  display: none;
 }
 
 .ranking-row:not(.top-1):not(.top-2):not(.top-3) {
   background: #FFFFFF;
+  border-radius: 50px;
 }
 
 .ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-name h2,
