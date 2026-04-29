@@ -23,7 +23,7 @@ const GAME_LABELS = {
   poker: "Poker",
   blackjack: "Blackjack",
   roulette: "Roulette",
-  horse_racing: "Horse Racing",
+  horse_racing: "Corsa Cavalli",
 };
 
 const PASTEL_CLASSES = [
@@ -190,15 +190,15 @@ async function initRankingPage() {
     return;
   }
 
-  liveIndicatorNode.textContent = "Realtime on";
+  liveIndicatorNode.textContent = "Realtime attivo";
 
   attachRoomWatcher(roomCode, (room) => {
     roomNode.textContent = roomCode;
-    activeGameNode.textContent = room.activeGame ? GAME_LABELS[room.activeGame] : "No active game";
-    movementCountNode.textContent = `${Object.keys(room.players || {}).length} Players`;
+    activeGameNode.textContent = room.activeGame ? GAME_LABELS[room.activeGame] : "Nessun gioco attivo";
+    movementCountNode.textContent = `${Object.keys(room.players || {}).length} Giocatori`;
     setRoomBadge(
       roomStateNode,
-      room.status === "ended" ? "Closed" : "Active",
+      room.status === "ended" ? "Chiusa" : "Attiva",
       room.status
     );
     renderMainRanking(listNode, buildMainRanking(room.players || {}));
@@ -283,7 +283,7 @@ async function initGamePage() {
       const entries = collectStartEntries(formNode);
       const rate = Number(chipsRateInput?.value || DEFAULT_CHIPS_PER_EURO);
       await startGame(roomCode, gameKey, entries, rate);
-      setStatus(statusNode, `${GAME_LABELS[gameKey]} started.`, false);
+      setStatus(statusNode, `${GAME_LABELS[gameKey]} avviato.`, false);
     } catch (error) {
       setStatus(statusNode, error.message, true);
     } finally {
@@ -310,7 +310,7 @@ async function initGamePage() {
       calculateResults(formNode, gameKey, Number(chipsRateInput?.value || DEFAULT_CHIPS_PER_EURO));
       const results = collectEndResults(formNode);
       await endSubGame(roomCode, gameKey, results);
-      setStatus(statusNode, `${GAME_LABELS[gameKey]} ended.`, false);
+      setStatus(statusNode, `${GAME_LABELS[gameKey]} terminato.`, false);
     } catch (error) {
       setStatus(statusNode, error.message, true);
     } finally {
@@ -611,7 +611,7 @@ function renderMainRanking(container, ranking) {
               <span class="ranking-position">${index + 1}</span>
               <div>
                 <h2>${escapeHtml(player.name)}</h2>
-                <p>Locked ${currencyFormatter.format(player.locked)} · Available ${currencyFormatter.format(player.available)}</p>
+                <p>Bloccato ${currencyFormatter.format(player.locked)} · Disponibile ${currencyFormatter.format(player.available)}</p>
               </div>
             </div>
             <strong>${currencyFormatter.format(player.total)}</strong>
@@ -620,7 +620,7 @@ function renderMainRanking(container, ranking) {
         .join("")
     : `
       <div class="empty-state">
-        <h2>No ranking data</h2>
+        <h2>Nessun dato disponibile</h2>
       </div>
     `;
 }
@@ -645,7 +645,7 @@ function renderMiniBoards(container, playersMap) {
                 `
               )
               .join("")
-          : '<p class="mini-empty">No results</p>'
+          : '<p class="mini-empty">Nessun risultato</p>'
       }
     `;
   });
