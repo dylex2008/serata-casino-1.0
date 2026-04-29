@@ -976,15 +976,17 @@ textarea:focus {
 .mini-mockup-card .mini-row span:first-child {
   font-weight: 800;
   font-size: 1.44rem;
-  width: 30px;
+  min-width: 20px;
   text-align: left;
+  padding-right: 0;
 }
 
 .mini-mockup-card .mini-row span:nth-child(2) {
   flex: 1;
   font-weight: 600;
   font-size: 1.32rem;
-  padding: 0 4px;
+  padding-left: 0;
+  margin-left: -5px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
