@@ -624,8 +624,8 @@ textarea:focus {
 }
 
 .ranking-row h2 {
-  font-size: 1.85rem;
-  font-weight: 700;
+  font-size: 2rem;
+  font-weight: 800;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -661,7 +661,7 @@ textarea:focus {
 .ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-position {
   background: #FFFFFF;
   color: #000000;
-  border: 2px solid #000000;
+  border: none;
 }
 
 .ranking-bar {
