@@ -1,885 +1,1336 @@
-import {
-  CHIP_GAMES,
-  createRoom,
-  DEFAULT_CHIPS_PER_EURO,
-  endRoom,
-  endSubGame,
-  GAME_KEYS,
-  getChipBreakdown,
-  getRoom,
-  hasPlaceholderConfig,
-  joinRoom,
-  listenRoom,
-  normalizePlayersList,
-  normalizeRoomCode,
-  resolveCurrentRoom,
-  resetRoom,
-  startGame,
-  subscribeToCurrentRoom,
-  updateGameChips,
-} from "./firebase.js";
+:root {
+  --bg: #fbfbfb;
+  --panel: #ffffff;
+  --line: #e8e8e8;
+  --line-strong: #d8d8d8;
+  --text: #000000;
+  --muted: #6f6f6f;
+  --shadow: 0 16px 36px rgba(0, 0, 0, 0.04);
+  --gold: #d4af37;
+  --silver: #bcc2cb;
+  --bronze: #b77a57;
+  --hero-pink: #c53b86;
+  --peach: #ffc987;
+  --peach-strong: #fb9d2f;
+  --blue: #78bee8;
+  --blue-strong: #117dbb;
+  --pink: #ec8fc5;
+  --pink-strong: #bf3a87;
+  --soft-gray: #d8d8d8;
+}
 
-const GAME_LABELS = {
-  poker: "Poker",
-  blackjack: "Blackjack",
-  roulette: "Roulette",
-  horse_racing: "Corsa Cavalli",
-};
+* {
+  box-sizing: border-box;
+}
 
-const PASTEL_CLASSES = [
-  "pastel-1",
-  "pastel-2",
-  "pastel-3",
-  "pastel-4",
-  "pastel-5",
-  "pastel-6",
-  "pastel-7",
-  "pastel-8",
-];
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Montserrat", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
 
-const currencyFormatter = new Intl.NumberFormat("it-IT", {
-  style: "currency",
-  currency: "EUR",
-  maximumFractionDigits: 2,
-});
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
 
-const integerFormatter = new Intl.NumberFormat("it-IT", {
-  maximumFractionDigits: 0,
-});
+.shell {
+  width: min(100vw - 24px, 1760px);
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 12px 0 18px;
+}
 
-const pageState = {
-  currentRoomCode: null,
-  currentRoom: null,
-  roomUnsubscribe: null,
-  currentGamePage: document.body.dataset.gamePage || null,
-};
+.shell-wide,
+.full-shell {
+  width: min(100vw - 24px, 1760px);
+}
 
-document.addEventListener("DOMContentLoaded", () => {
-  if (document.querySelector("#create-room-form")) {
-    initHomePage();
+.home-shell {
+  position: relative;
+  overflow: hidden;
+}
+
+.panel,
+.hero-form-card,
+.ranking-row,
+.mini-board,
+.player-entry-card,
+.summary-box {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.dot-corner {
+  position: absolute;
+  pointer-events: none;
+  background-image: radial-gradient(#000 1.6px, transparent 1.6px);
+  background-size: 20px 20px;
+}
+
+.dot-corner-top {
+  top: 6px;
+  left: 6px;
+  width: 400px;
+  height: 230px;
+  mask-image: linear-gradient(180deg, #000 70%, transparent 100%);
+}
+
+.dot-corner-bottom {
+  right: 6px;
+  bottom: 6px;
+  width: 200px;
+  height: 110px;
+  mask-image: radial-gradient(circle at bottom right, #000 48%, transparent 72%);
+}
+
+.home-hero {
+  min-height: calc(100vh - 24px);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 34px;
+  padding: 7vh 3vw 4vh;
+}
+
+.home-copy {
+  display: grid;
+  gap: 16px;
+}
+
+.hero-title {
+  font-size: clamp(3.8rem, 6vw, 7rem);
+  line-height: 0.94;
+  letter-spacing: -0.06em;
+  text-align: center;
+  color: var(--hero-pink);
+}
+
+.hero-subtitle {
+  max-width: 1080px;
+  text-align: center;
+  font-size: clamp(1rem, 1.25vw, 1.35rem);
+  color: #1d1d1d;
+}
+
+.hero-buttons {
+  width: min(1040px, 100%);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 34px;
+}
+
+.hero-button,
+.button-primary,
+.button-secondary {
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+.hero-button:hover,
+.button-primary:hover,
+.button-secondary:hover,
+.game-choice:hover {
+  transform: translateY(-2px);
+}
+
+.hero-button {
+  padding: 26px 28px;
+  font-size: clamp(1.2rem, 1.5vw, 1.8rem);
+}
+
+.hero-button[data-active="true"] {
+  box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.08);
+}
+
+.hero-button-peach {
+  background: var(--peach);
+  color: #000;
+}
+
+.hero-button-blue {
+  background: var(--blue);
+  color: #000;
+}
+
+.hero-forms {
+  width: min(1040px, 100%);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.hero-form-card {
+  border-radius: 34px;
+  padding: 24px;
+  display: grid;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.hero-form-card[hidden] {
+  display: none;
+}
+
+.button-primary,
+.button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border: 1px solid #000;
+}
+
+.button-primary {
+  background: #000;
+  color: #fff;
+}
+
+.button-secondary {
+  background: #fff;
+  color: #000;
+}
+
+.button-peach {
+  background: var(--peach);
+  border-color: transparent;
+  color: #000;
+}
+
+.button-blue {
+  background: var(--blue);
+  border-color: transparent;
+  color: #000;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 22px;
+  background: #fff;
+  color: #000;
+  padding: 14px 16px;
+  font: inherit;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #000;
+  outline-offset: 1px;
+}
+
+.status-text,
+.room-preview,
+.inline-muted {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.minimal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.room-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.room-code-inline {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.state-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #000;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.state-badge[data-state="active"] {
+  background: #000;
+  color: #fff;
+}
+
+.state-badge[data-state="ended"],
+.state-badge[data-state="idle"] {
+  background: #fff;
+  color: #000;
+}
+
+.selection-shell {
+  display: grid;
+  align-content: start;
+}
+
+.games-selection-grid {
+  min-height: calc(100vh - 170px);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.game-choice {
+  min-height: 38vh;
+  border-radius: 42px;
+  text-decoration: none;
+  color: #000;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 20px;
+  padding: 46px 30px 26px;
+}
+
+.game-choice-peach {
+  background: #ffc57d;
+}
+
+.game-choice-pink {
+  background: var(--pink);
+}
+
+.game-choice-blue {
+  background: var(--blue);
+}
+
+.game-choice-gray {
+  background: var(--soft-gray);
+}
+
+.game-choice[data-state="active"] {
+  box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.14);
+}
+
+.game-choice-title {
+  font-size: clamp(2.5rem, 3.3vw, 4rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+  font-weight: 800;
+}
+
+.game-choice-icon {
+  font-size: clamp(8rem, 11vw, 14rem);
+  line-height: 1;
+}
+
+.icon-spade {
+  color: var(--peach-strong);
+}
+
+.icon-club {
+  color: var(--pink-strong);
+}
+
+.icon-diamond {
+  color: var(--blue-strong);
+}
+
+.icon-heart {
+  color: #000;
+}
+
+.bottom-icons {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  padding: 18px 0 4px;
+  font-size: 2rem;
+  color: #000;
+}
+
+.center-text {
+  text-align: center;
+}
+
+.entry-panel,
+.ranking-main {
+  padding: 28px;
+  border-radius: 34px;
+}
+
+.entry-topbar,
+.ranking-title-row,
+.panel-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.entry-topbar,
+.ranking-title-row {
+  margin-bottom: 20px;
+}
+
+.entry-topbar h1,
+.ranking-title-row h1 {
+  font-size: clamp(2rem, 3vw, 3.4rem);
+  letter-spacing: -0.05em;
+}
+
+.entry-actions,
+.ranking-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.entry-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.summary-box {
+  padding: 14px;
+  border-radius: 24px;
+  display: grid;
+  gap: 6px;
+}
+
+.summary-box span {
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.summary-box strong {
+  font-size: 1rem;
+}
+
+.compact-field {
+  max-width: 220px;
+  margin-bottom: 20px;
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.player-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.player-entry-card {
+  border-radius: 30px;
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.player-entry-card label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.player-card-index {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.pastel-1 {
+  background: #ffe9d3;
+}
+
+.pastel-2 {
+  background: #f8d6ea;
+}
+
+.pastel-3 {
+  background: #d7eefb;
+}
+
+.pastel-4 {
+  background: #ececec;
+}
+
+.pastel-5 {
+  background: #f9e6db;
+}
+
+.pastel-6 {
+  background: #eadcf7;
+}
+
+.pastel-7 {
+  background: #dff2ea;
+}
+
+.pastel-8 {
+  background: #e8edf8;
+}
+
+.chips-visual {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 34px;
+}
+
+.chip-stack-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 0.82rem;
+}
+
+.chip-mark {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #000;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.rankings-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
+  gap: 18px;
+}
+
+.leaderboard-list,
+.mini-boards {
+  display: grid;
+  gap: 12px;
+}
+
+.ranking-row {
+  border-radius: 50px;
+  height: 80px;
+  padding: 0;
+  display: flex;
+  justify-content: flex-start;
+  gap: 0;
+  align-items: stretch;
+  overflow: visible;
+  box-shadow: none;
+}
+
+.ranking-row.top-1,
+.ranking-row.top-2,
+.ranking-row.top-3 {
+  border-radius: 50px 50px 50px 50px;
+}
+
+.ranking-left {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 1;
+  overflow: visible;
+  border-radius: 50px 0 0 50px;
+}
+
+.ranking-position {
+  width: 80px;
+  height: 80px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFFFFF;
+  color: #000000;
+  font-weight: 800;
+  font-size: 2rem;
+  flex-shrink: 0;
+  margin-left: -8px;
+}
+
+.ranking-bar {
+  width: 12px;
+  height: 100%;
+  flex-shrink: 0;
+  border-radius: 50px 0 0 50px;
+}
+
+.top-1 .ranking-bar,
+.top-2 .ranking-bar,
+.top-3 .ranking-bar {
+  display: none;
+}
+
+.ranking-position img {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+}
+
+.ranking-position.crown-position {
+  background: #7E7E7E;
+}
+
+.ranking-row .ranking-name {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  padding-left: 28px;
+}
+
+.ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-name {
+  padding-left: 28px;
+}
+
+.ranking-row h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+}
+
+.ranking-row p {
+  display: none;
+}
+
+.ranking-row .ranking-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 24px;
+  font-weight: 800;
+  font-size: 1.4rem;
+  background: transparent;
+  min-width: 160px;
+}
+
+.ranking-row .ranking-amount .total-amount {
+  font-size: 1.4rem;
+}
+
+.ranking-row .ranking-amount .locked-amount {
+  font-size: 0.9rem;
+  color: #027dbc;
+  font-weight: 600;
+}
+
+.ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-position {
+  background: #FFFFFF;
+  color: #000000;
+  border: none;
+}
+
+.ranking-bar {
+  height: 100%;
+  width: 6px;
+  flex-shrink: 0;
+}
+
+.top-1 {
+  background: #f39c35;
+}
+
+.top-1 .ranking-bar {
+  display: none;
+}
+
+.top-1 .ranking-position {
+  background: #FFFFFF;
+}
+
+.top-1 .ranking-position img {
+  filter: none;
+}
+
+.top-1 .ranking-name h2,
+.top-1 .ranking-name p,
+.top-1 .ranking-amount,
+.top-1 .ranking-amount .locked-amount {
+  color: #FFFFFF;
+}
+
+.top-2 {
+  background: #027dbc;
+}
+
+.top-2 .ranking-bar {
+  display: none;
+}
+
+.top-2 .ranking-position {
+  background: #FFFFFF;
+}
+
+.top-2 .ranking-name h2,
+.top-2 .ranking-name p,
+.top-2 .ranking-amount,
+.top-2 .ranking-amount .locked-amount {
+  color: #FFFFFF;
+}
+
+.top-3 {
+  background: #c23c83;
+}
+
+.top-3 .ranking-bar {
+  display: none;
+}
+
+.top-3 .ranking-position {
+  background: #FFFFFF;
+}
+
+.top-3 .ranking-name h2,
+.top-3 .ranking-name p,
+.top-3 .ranking-amount,
+.top-3 .ranking-amount .locked-amount {
+  color: #FFFFFF;
+}
+
+.ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-bar {
+  display: none;
+}
+
+.ranking-row:not(.top-1):not(.top-2):not(.top-3) {
+  background: #FFFFFF;
+  border-radius: 50px;
+}
+
+.ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-name h2,
+.ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-name p,
+.ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-amount {
+  color: #000000;
+}
+
+.top-3 {
+  background: linear-gradient(180deg, rgba(183, 122, 87, 0.14), #fff);
+  border-color: var(--bronze);
+}
+
+.grid-four {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mini-board {
+  border-radius: 28px;
+  padding: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.mini-row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 0.92rem;
+}
+
+.mini-top {
+  background: rgba(0, 0, 0, 0.035);
+  margin: 0 -8px;
+  padding: 10px 8px 0;
+}
+
+.mini-board[data-mini-board="poker"] .mini-top strong,
+.mini-board[data-mini-board="blackjack"] .mini-top strong,
+.mini-board[data-mini-board="roulette"] .mini-top strong,
+.mini-board[data-mini-board="horse_racing"] .mini-top strong {
+  color: var(--gold);
+}
+
+.mini-empty {
+  color: var(--muted);
+}
+
+.empty-state {
+  padding: 28px;
+  text-align: center;
+  border: 1px dashed var(--line-strong);
+  border-radius: 22px;
+}
+
+.leaderboard-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.topbar-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border: 1.5px solid #000;
+  border-radius: 999px;
+  font-weight: 700;
+  text-decoration: none;
+  color: #000;
+  background: #fff;
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+.topbar-pill:hover {
+  transform: translateY(-2px);
+}
+
+.topbar-pill-light {
+  background: transparent;
+}
+
+.topbar-center {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.topbar-room {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.topbar-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #000;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: #000;
+  color: #fff;
+}
+
+.topbar-muted {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.leaderboard-mockup-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
+  gap: 18px;
+}
+
+.leaderboard-mockup-main {
+  min-height: calc(100vh - 120px);
+}
+
+.leaderboard-mockup-card {
+  background: #D9D9D9;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 16px;
+  height: 100%;
+}
+
+.leaderboard-mockup-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.leaderboard-mockup-head h1 {
+  font-size: clamp(2rem, 3vw, 3.4rem);
+  letter-spacing: -0.05em;
+}
+
+.leaderboard-mockup-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.leaderboard-mockup-list {
+  display: grid;
+  gap: 10px;
+  padding-bottom: 16px;
+}
+
+.leaderboard-mockup-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mini-mockup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mini-mockup-card {
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--panel);
+  box-shadow: none;
+}
+
+.mini-mockup-peach {
+  background: #F2C27D;
+}
+
+.mini-mockup-blue {
+  background: #9CCDEB;
+}
+
+.mini-mockup-pink {
+  background: #EDB0D3;
+}
+
+.mini-mockup-gray {
+  background: #D9D9D9;
+}
+
+.mini-mockup-card h3 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.mini-mockup-card .mini-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.mini-mockup-card .mini-row:first-of-type {
+  margin-top: 4px;
+}
+
+.mini-mockup-card .mini-row span:first-child {
+  font-weight: 700;
+  font-size: 1rem;
+  width: 40px;
+  text-align: center;
+}
+
+.mini-mockup-card .mini-row span:nth-child(2) {
+  flex: 1;
+  font-weight: 500;
+  font-size: 0.9rem;
+  padding: 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-mockup-card .mini-row strong {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.mini-mockup-card .mini-top {
+  gap: 4px;
+}
+
+.mini-mockup-card .mini-top span:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-mockup-card .mini-top span:first-child img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.mini-mockup-card .mini-empty {
+  text-align: center;
+  color: rgba(0, 0, 0, 0.4);
+  font-size: 0.85rem;
+  padding: 20px 0;
+}
+
+@media (max-width: 1180px) {
+  .hero-buttons,
+  .hero-forms,
+  .player-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  if (document.querySelector(".games-selection-grid")) {
-    initGameSelectionPage();
-  }
-
-  if (document.querySelector("#leaderboard-list")) {
-    initRankingPage();
-  }
-
-  if (document.querySelector("#game-form")) {
-    initGamePage();
-  }
-
-  if (document.querySelector("#player-select")) {
-    initPlayerStatsPage();
-  }
-});
-
-function initHomePage() {
-  const createForm = document.querySelector("#create-room-form");
-  const joinForm = document.querySelector("#join-room-form");
-  const createStatus = document.querySelector("#create-room-status");
-  const joinStatus = document.querySelector("#join-room-status");
-  const createdRoomNode = document.querySelector("#created-room-code");
-  const heroButtons = [...document.querySelectorAll("[data-home-panel]")];
-  const heroPanels = [...document.querySelectorAll("[data-panel]")];
-
-  if (hasPlaceholderConfig) {
-    setStatus(createStatus, "Firebase config missing.", true);
-    setStatus(joinStatus, "Firebase config missing.", true);
-    return;
-  }
-
-  const activatePanel = (panelId) => {
-    heroButtons.forEach((button) => {
-      button.dataset.active = String(button.dataset.homePanel === panelId);
-    });
-
-    heroPanels.forEach((panel) => {
-      panel.hidden = panel.dataset.panel !== panelId;
-    });
-  };
-
-  heroButtons.forEach((button) => {
-    button.addEventListener("click", () => activatePanel(button.dataset.homePanel));
-  });
-
-  activatePanel("create");
-
-  createForm?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const button = createForm.querySelector('button[type="submit"]');
-    const players = normalizePlayersList(
-      String(createForm.querySelector("#players-list")?.value || "").split(",")
-    );
-
-    button.disabled = true;
-    try {
-      const roomCode = await createRoom(players);
-      createdRoomNode.textContent = roomCode;
-      setStatus(createStatus, `Room ${roomCode} created.`, false);
-      window.location.href = "input.html";
-    } catch (error) {
-      setStatus(createStatus, error.message, true);
-    } finally {
-      button.disabled = false;
-    }
-  });
-
-  joinForm?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const button = joinForm.querySelector('button[type="submit"]');
-    const roomCode = normalizeRoomCode(
-      joinForm.querySelector("#room-code-input")?.value || ""
-    );
-
-    button.disabled = true;
-    try {
-      await joinRoom(roomCode);
-      setStatus(joinStatus, `Room ${roomCode} joined.`, false);
-      window.location.href = "input.html";
-    } catch (error) {
-      setStatus(joinStatus, error.message, true);
-    } finally {
-      button.disabled = false;
-    }
-  });
-}
-
-async function initGameSelectionPage() {
-  const statusNode = document.querySelector("#dashboard-status");
-  const roomCodeNode = document.querySelector("#current-room-code");
-  const roomStateNode = document.querySelector("#room-state");
-
-  if (hasPlaceholderConfig) {
-    setStatus(statusNode, "Firebase config missing.", true);
-    return;
-  }
-
-  const roomCode = await resolveCurrentRoom();
-  if (!roomCode) {
-    window.location.href = "index.html";
-    return;
-  }
-
-  attachRoomWatcher(roomCode, (room) => {
-    roomCodeNode.textContent = roomCode;
-    setRoomBadge(
-      roomStateNode,
-      room.status === "ended" ? "Closed" : "Active",
-      room.status
-    );
-    updateGameLinks(room);
-  }, statusNode);
-}
-
-async function initRankingPage() {
-  const listNode = document.querySelector("#leaderboard-list");
-  const miniBoardsRoot = document.querySelector("#mini-leaderboards");
-  const liveIndicatorNode = document.querySelector("#live-indicator");
-  const movementCountNode = document.querySelector("#movement-count");
-  const roomNode = document.querySelector("#leaderboard-game-id");
-  const roomStateNode = document.querySelector("#leaderboard-game-state");
-  const activeGameNode = document.querySelector("#leaderboard-active-games");
-
-  if (hasPlaceholderConfig) {
-    liveIndicatorNode.textContent = "Firebase config missing";
-    return;
-  }
-
-  const roomCode = await resolveCurrentRoom();
-  if (!roomCode) {
-    window.location.href = "index.html";
-    return;
-  }
-
-  liveIndicatorNode.textContent = "Realtime attivo";
-
-  attachRoomWatcher(roomCode, (room) => {
-    roomNode.textContent = roomCode;
-    activeGameNode.textContent = room.activeGame ? GAME_LABELS[room.activeGame] : "Nessun gioco attivo";
-    movementCountNode.textContent = `${Object.keys(room.players || {}).length} Giocatori`;
-    setRoomBadge(
-      roomStateNode,
-      room.status === "ended" ? "Chiusa" : "Attiva",
-      room.status
-    );
-    renderMainRanking(listNode, buildMainRanking(room.players || {}));
-    renderMiniBoards(miniBoardsRoot, room.players || {});
-  });
-}
-
-async function initGamePage() {
-  const gameKey = pageState.currentGamePage;
-  const formNode = document.querySelector("#game-form");
-  const statusNode = document.querySelector("#game-status-text");
-  const roomCodeNode = document.querySelector("#game-room-code");
-  const roomStateNode = document.querySelector("#game-room-state");
-  const summaryPlayersNode = document.querySelector("#game-selected-players");
-  const summaryLockedNode = document.querySelector("#game-selected-locked");
-  const summaryRateNode = document.querySelector("#game-selected-rate");
-  const summaryStatusNode = document.querySelector("#game-selected-status");
-  const chipsRateInput = document.querySelector("#chips-rate");
-  const startButton = document.querySelector("#start-subgame");
-  const updateChipsButton = document.querySelector("#update-chips");
-  const calculateButton = document.querySelector("#calculate-results");
-  const finishButton = document.querySelector("#finish-subgame");
-  const useChips = CHIP_GAMES.has(gameKey);
-
-  buildPlayerCards(formNode, useChips);
-
-  if (hasPlaceholderConfig) {
-    setStatus(statusNode, "Firebase config missing.", true);
-    return;
-  }
-
-  const roomCode = await resolveCurrentRoom();
-  if (!roomCode) {
-    window.location.href = "index.html";
-    return;
-  }
-
-  attachRoomWatcher(roomCode, (room) => {
-    roomCodeNode.textContent = roomCode;
-    setRoomBadge(
-      roomStateNode,
-      room.status === "ended" ? "Closed" : "Active",
-      room.status
-    );
-
-    populateGameCards(formNode, room, gameKey);
-    updateGameSummary({
-      room,
-      gameKey,
-      summaryPlayersNode,
-      summaryLockedNode,
-      summaryRateNode,
-      summaryStatusNode,
-      chipsRateInput,
-    });
-    syncGameControls({
-      room,
-      gameKey,
-      formNode,
-      startButton,
-      updateChipsButton,
-      calculateButton,
-      finishButton,
-      chipsRateInput,
-    });
-  }, statusNode);
-
-  formNode.addEventListener("input", () => {
-    if (useChips) {
-      updateChipVisuals(formNode);
-    }
-  });
-
-  calculateButton?.addEventListener("click", () => {
-    calculateResults(formNode, gameKey, Number(chipsRateInput?.value || DEFAULT_CHIPS_PER_EURO));
-    setStatus(statusNode, "Results calculated.", false);
-  });
-
-  startButton?.addEventListener("click", async () => {
-    startButton.disabled = true;
-    try {
-      const entries = collectStartEntries(formNode);
-      const rate = Number(chipsRateInput?.value || DEFAULT_CHIPS_PER_EURO);
-      await startGame(roomCode, gameKey, entries, rate);
-      setStatus(statusNode, `${GAME_LABELS[gameKey]} avviato.`, false);
-    } catch (error) {
-      setStatus(statusNode, error.message, true);
-    } finally {
-      startButton.disabled = false;
-    }
-  });
-
-  updateChipsButton?.addEventListener("click", async () => {
-    updateChipsButton.disabled = true;
-    try {
-      const updates = collectChipUpdates(formNode);
-      await updateGameChips(roomCode, gameKey, updates);
-      setStatus(statusNode, "Chips updated.", false);
-    } catch (error) {
-      setStatus(statusNode, error.message, true);
-    } finally {
-      updateChipsButton.disabled = false;
-    }
-  });
-
-  finishButton?.addEventListener("click", async () => {
-    finishButton.disabled = true;
-    try {
-      calculateResults(formNode, gameKey, Number(chipsRateInput?.value || DEFAULT_CHIPS_PER_EURO));
-      const results = collectEndResults(formNode);
-      await endSubGame(roomCode, gameKey, results);
-      updatePlayerGameHistory(roomCode, gameKey, results);
-      setStatus(statusNode, `${GAME_LABELS[gameKey]} terminato.`, false);
-    } catch (error) {
-      setStatus(statusNode, error.message, true);
-    } finally {
-      finishButton.disabled = false;
-    }
-  });
-}
-
-function updatePlayerGameHistory(roomCode, gameKey, results) {
-  const storageKey = `serata-casino-games-${roomCode}`;
-  const history = JSON.parse(localStorage.getItem(storageKey) || "{}");
-
-  Object.entries(results).forEach(([playerName, result]) => {
-    if (!history[playerName]) {
-      history[playerName] = {};
-    }
-    if (!history[playerName][gameKey]) {
-      history[playerName][gameKey] = { played: 0, won: 0, lost: 0 };
-    }
-    history[playerName][gameKey].played += 1;
-    if (result > 0) {
-      history[playerName][gameKey].won += 1;
-    } else if (result < 0) {
-      history[playerName][gameKey].lost += 1;
-    }
-  });
-
-  localStorage.setItem(storageKey, JSON.stringify(history));
-}
-
-function getPlayerGameHistory(roomCode, playerName) {
-  const storageKey = `serata-casino-games-${roomCode}`;
-  const history = JSON.parse(localStorage.getItem(storageKey) || "{}");
-  return history[playerName] || {};
-}
-
-let currentRoomCode = null;
-
-async function initPlayerStatsPage() {
-  const selectNode = document.querySelector("#player-select");
-  const contentNode = document.querySelector("#player-stats-content");
-  const emptyNode = document.querySelector("#player-stats-empty");
-  const statusNode = document.querySelector("#player-stats-status");
-  const roomCodeNode = document.querySelector("#player-stats-room-code");
-  const roomStateNode = document.querySelector("#player-stats-room-state");
-
-  if (hasPlaceholderConfig) {
-    setStatus(statusNode, "Firebase config missing.", true);
-    return;
-  }
-
-  currentRoomCode = await resolveCurrentRoom();
-  if (!currentRoomCode) {
-    window.location.href = "index.html";
-    return;
-  }
-
-  let currentRoomData = null;
-
-  attachRoomWatcher(currentRoomCode, (room) => {
-    currentRoomData = room;
-    roomCodeNode.textContent = currentRoomCode;
-    setRoomBadge(
-      roomStateNode,
-      room.status === "ended" ? "Chiusa" : "Attiva",
-      room.status
-    );
-
-    populatePlayerSelectForStats(selectNode, room.playersList);
-
-    const selectedPlayer = selectNode.value;
-    if (selectedPlayer && room.players[selectedPlayer]) {
-      contentNode.hidden = false;
-      emptyNode.hidden = true;
-      renderPlayerStats(selectedPlayer, room, currentRoomCode);
-    } else {
-      contentNode.hidden = true;
-      emptyNode.hidden = false;
-    }
-  }, statusNode);
-
-  selectNode.addEventListener("change", () => {
-    const selectedPlayer = selectNode.value;
-    if (selectedPlayer && currentRoomData && currentRoomData.players[selectedPlayer]) {
-      contentNode.hidden = false;
-      emptyNode.hidden = true;
-      renderPlayerStats(selectedPlayer, currentRoomData, currentRoomCode);
-    } else {
-      contentNode.hidden = true;
-      emptyNode.hidden = false;
-    }
-  });
-}
-
-function populatePlayerSelectForStats(select, players) {
-  const currentValue = select.value;
-  select.innerHTML = `
-    <option value="">-- Seleziona un giocatore --</option>
-    ${players.map((player) => `<option value="${escapeHtml(player)}">${escapeHtml(player)}</option>`).join("")}
-  `;
-
-  if (players.includes(currentValue)) {
-    select.value = currentValue;
+  .rankings-layout {
+    grid-template-columns: 1fr;
   }
 }
 
-function renderPlayerStats(playerName, room, roomCode) {
-  const generalRanking = buildMainRanking(room.players || {});
-  const playerIndex = generalRanking.findIndex((p) => p.name === playerName);
-  const generalPosition = playerIndex >= 0 ? playerIndex + 1 : null;
-
-  document.getElementById("general-position").textContent = generalPosition ? `#${generalPosition}` : "-";
-
-  const playerLedger = room.players[playerName];
-  document.getElementById("player-total").textContent = currencyFormatter.format(playerLedger.total);
-  document.getElementById("player-locked").textContent = currencyFormatter.format(playerLedger.locked);
-  document.getElementById("player-available").textContent = currencyFormatter.format(playerLedger.available);
-
-  const gameHistory = getPlayerGameHistory(roomCode || "", playerName);
-
-  const microRankings = {};
-  GAME_KEYS.forEach((gameKey) => {
-    const ranking = buildMiniRanking(room.players || {}, gameKey);
-    const pos = ranking.findIndex((p) => p.name === playerName);
-    microRankings[gameKey] = pos >= 0 ? pos + 1 : null;
-  });
-
-  document.getElementById("position-poker").textContent = microRankings.poker ? `#${microRankings.poker}` : "-";
-  document.getElementById("position-blackjack").textContent = microRankings.blackjack ? `#${microRankings.blackjack}` : "-";
-  document.getElementById("position-horse_racing").textContent = microRankings.horse_racing ? `#${microRankings.horse_racing}` : "-";
-  document.getElementById("position-roulette").textContent = microRankings.roulette ? `#${microRankings.roulette}` : "-";
-
-  renderGamesHistory(room, playerName, gameHistory);
-}
-
-function renderGamesHistory(room, playerName, gameHistory) {
-  const container = document.getElementById("games-history-list");
-  const gamesData = gameHistory[playerName] || {};
-
-  const hasGames = Object.values(gamesData).some((data) => data.played > 0);
-
-  if (!hasGames) {
-    container.innerHTML = '<p class="no-games-message">Nessun gioco disputato</p>';
-    return;
+@media (max-width: 760px) {
+  .shell,
+  .shell-wide,
+  .full-shell {
+    width: min(100vw - 16px, 1760px);
+    padding-top: 8px;
   }
 
-  container.innerHTML = GAME_KEYS
-    .filter((gameKey) => gamesData[gameKey] && gamesData[gameKey].played > 0)
-    .map((gameKey) => {
-      const data = gamesData[gameKey];
-      const netResult = room.players[playerName]?.games?.[gameKey] || 0;
-      return `
-        <article class="game-history-card">
-          <div class="game-history-header">
-            <h3>${GAME_LABELS[gameKey]}</h3>
-            <span class="game-net-result ${netResult >= 0 ? "positive" : "negative"}">
-              ${netResult >= 0 ? "+" : ""}${currencyFormatter.format(netResult)}
-            </span>
-          </div>
-          <div class="game-history-stats">
-            <div class="stat-item">
-              <span class="stat-value">${data.played}</span>
-              <span class="stat-label">Giocati</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-value">${data.won}</span>
-              <span class="stat-label">Vinti</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-value">${data.lost}</span>
-              <span class="stat-label">Persi</span>
-            </div>
-          </div>
-        </article>
-      `;
-    })
-    .join("");
-}
-
-function attachRoomWatcher(roomCode, onRoomUpdate, statusNode) {
-  pageState.currentRoomCode = normalizeRoomCode(roomCode);
-
-  if (pageState.roomUnsubscribe) {
-    pageState.roomUnsubscribe();
+  .home-hero {
+    padding: 60px 10px 30px;
+    gap: 24px;
   }
 
-  pageState.roomUnsubscribe = listenRoom(
-    pageState.currentRoomCode,
-    (room) => {
-      if (!room) {
-        window.location.href = "index.html";
-        return;
-      }
+  .hero-title {
+    font-size: clamp(2.8rem, 11vw, 4.8rem);
+  }
 
-      pageState.currentRoom = room;
-      onRoomUpdate(room);
-    },
-    (error) => setStatus(statusNode, error.message, true)
-  );
+  .minimal-header,
+  .entry-topbar,
+  .panel-actions,
+  .ranking-title-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-  subscribeToCurrentRoom(async (firebaseCurrentRoom) => {
-    const normalizedCode = normalizeRoomCode(firebaseCurrentRoom);
-    if (normalizedCode && normalizedCode !== pageState.currentRoomCode) {
-      const currentRoom = await getRoom(pageState.currentRoomCode);
-      if (!currentRoom) {
-        window.location.href = "index.html";
-      }
-    }
-  });
-}
+  .hero-buttons,
+  .hero-forms,
+  .games-selection-grid,
+  .entry-summary,
+  .player-cards-grid,
+  .grid-four {
+    grid-template-columns: 1fr;
+  }
 
-function updateGameLinks(room) {
-  GAME_KEYS.forEach((gameKey) => {
-    const node = document.querySelector(`#game-status-${gameKey}`);
-    const link = document.querySelector(`[data-game-link="${gameKey}"]`);
-    const active = room.games?.[gameKey]?.status === "active";
+  .game-choice {
+    min-height: 28vh;
+    border-radius: 30px;
+  }
 
-    if (node) {
-      node.textContent = GAME_LABELS[gameKey];
-    }
+  .game-choice-title {
+    font-size: clamp(2.2rem, 10vw, 3.2rem);
+  }
 
-    if (link) {
-      link.dataset.state = active ? "active" : "idle";
-    }
-  });
-}
+  .game-choice-icon {
+    font-size: clamp(6rem, 24vw, 8rem);
+  }
 
-function buildPlayerCards(container, useChips) {
-  container.innerHTML = Array.from({ length: 8 }, (_, index) => {
-    const pastelClass = PASTEL_CLASSES[index % PASTEL_CLASSES.length];
-    return `
-      <article class="player-entry-card ${pastelClass}">
-        <span class="player-card-index">${index + 1}</span>
-        <label>
-          <span>Name</span>
-          <select name="player">
-            <option value="">Select player</option>
-          </select>
-        </label>
-        <label>
-          <span>Buy-in €</span>
-          <input type="number" name="investment" step="0.01" placeholder="0" />
-        </label>
-        <label>
-          <span>${useChips ? "Final chips" : "Final amount €"}</span>
-          <input type="number" name="value" step="${useChips ? "1" : "0.01"}" placeholder="0" />
-        </label>
-        <label>
-          <span>Result €</span>
-          <input type="number" name="result" step="0.01" placeholder="0" readonly />
-        </label>
-        ${useChips ? '<div class="chips-visual" data-chip-stack></div>' : ""}
-      </article>
-    `;
-  }).join("");
-}
+  .entry-panel,
+  .ranking-main {
+    padding: 20px;
+  }
 
-function populateGameCards(container, room, gameKey) {
-  const selects = container.querySelectorAll('select[name="player"]');
-  const cards = [...container.querySelectorAll(".player-entry-card")];
-  const sessionEntries = Object.entries(room.games?.[gameKey]?.session?.participants || {});
-
-  selects.forEach((select) => populatePlayerSelect(select, room.playersList));
-
-  cards.forEach((card, index) => {
-    const select = card.querySelector('select[name="player"]');
-    const investment = card.querySelector('input[name="investment"]');
-    const value = card.querySelector('input[name="value"]');
-    const result = card.querySelector('input[name="result"]');
-    const chipStack = card.querySelector("[data-chip-stack]");
-    const sessionEntry = sessionEntries[index];
-
-    if (sessionEntry) {
-      const [playerName, participant] = sessionEntry;
-      select.value = playerName;
-      investment.value = participant.investedEuro;
-      value.value = CHIP_GAMES.has(gameKey)
-        ? participant.currentChips
-        : participant.currentChips;
-
-      if (chipStack) {
-        renderChipStack(chipStack, participant.chipBreakdown || getChipBreakdown(participant.currentChips));
-      }
-    } else {
-      select.value = "";
-      investment.value = "";
-      value.value = "";
-      if (!result.matches(":focus")) {
-        result.value = "";
-      }
-      if (chipStack) {
-        chipStack.innerHTML = "";
-      }
-    }
-  });
-}
-
-function populatePlayerSelect(select, players) {
-  const currentValue = select.value;
-  select.innerHTML = `
-    <option value="">Select player</option>
-    ${players.map((player) => `<option value="${escapeHtml(player)}">${escapeHtml(player)}</option>`).join("")}
-  `;
-
-  if (players.includes(currentValue)) {
-    select.value = currentValue;
+  .ranking-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
-function updateGameSummary({
-  room,
-  gameKey,
-  summaryPlayersNode,
-  summaryLockedNode,
-  summaryRateNode,
-  summaryStatusNode,
-  chipsRateInput,
-}) {
-  const game = room.games?.[gameKey];
-  const participants = Object.values(game?.session?.participants || {});
-  const locked = participants.reduce((sum, player) => sum + Number(player.investedEuro || 0), 0);
-
-  summaryPlayersNode.textContent = String(participants.length);
-  summaryLockedNode.textContent = currencyFormatter.format(locked);
-  summaryRateNode.textContent = CHIP_GAMES.has(gameKey)
-    ? `${integerFormatter.format(game?.chipsPerEuro || DEFAULT_CHIPS_PER_EURO)} chips / €1`
-    : "Direct";
-  summaryStatusNode.textContent = game?.status === "active" ? "Live" : "Ready";
-
-  if (chipsRateInput) {
-    chipsRateInput.value = String(game?.chipsPerEuro || DEFAULT_CHIPS_PER_EURO);
-  }
+.player-stats-container {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-function syncGameControls({
-  room,
-  gameKey,
-  formNode,
-  startButton,
-  updateChipsButton,
-  calculateButton,
-  finishButton,
-  chipsRateInput,
-}) {
-  const game = room.games?.[gameKey];
-  const active = game?.status === "active";
-  const roomEnded = room.status === "ended";
-  const useChips = CHIP_GAMES.has(gameKey);
-
-  formNode.querySelectorAll(".player-entry-card").forEach((card) => {
-    const select = card.querySelector('select[name="player"]');
-    const investment = card.querySelector('input[name="investment"]');
-    const value = card.querySelector('input[name="value"]');
-
-    select.disabled = roomEnded || active;
-    investment.disabled = roomEnded || active;
-    value.disabled = roomEnded || !active;
-  });
-
-  if (chipsRateInput) {
-    chipsRateInput.disabled = roomEnded || active || !useChips;
-    chipsRateInput.closest(".compact-field").style.display = useChips ? "" : "none";
-  }
-
-  if (startButton) {
-    startButton.disabled = roomEnded || active;
-  }
-
-  if (updateChipsButton) {
-    updateChipsButton.disabled = roomEnded || !active || !useChips;
-    updateChipsButton.style.display = useChips ? "" : "none";
-  }
-
-  if (calculateButton) {
-    calculateButton.disabled = roomEnded;
-  }
-
-  if (finishButton) {
-    finishButton.disabled = roomEnded || !active;
-  }
+.player-select-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-function calculateResults(container, gameKey, chipsRate) {
-  const useChips = CHIP_GAMES.has(gameKey);
-
-  [...container.querySelectorAll(".player-entry-card")].forEach((card) => {
-    const investment = parseNumber(card.querySelector('input[name="investment"]')?.value) || 0;
-    const value = parseNumber(card.querySelector('input[name="value"]')?.value) || 0;
-    const resultNode = card.querySelector('input[name="result"]');
-    const chipStack = card.querySelector("[data-chip-stack]");
-
-    const result = useChips ? value / (chipsRate || DEFAULT_CHIPS_PER_EURO) - investment : value - investment;
-    resultNode.value = Number.isFinite(result) ? result.toFixed(2) : "";
-
-    if (chipStack && useChips) {
-      renderChipStack(chipStack, getChipBreakdown(value));
-    }
-  });
+.player-select-label {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text);
 }
 
-function updateChipVisuals(container) {
-  [...container.querySelectorAll(".player-entry-card")].forEach((card) => {
-    const chipStack = card.querySelector("[data-chip-stack]");
-    const value = parseNumber(card.querySelector('input[name="value"]')?.value) || 0;
-    if (chipStack) {
-      renderChipStack(chipStack, getChipBreakdown(value));
-    }
-  });
+.player-select-dropdown {
+  padding: 14px 16px;
+  font-family: inherit;
+  font-size: 1rem;
+  border: 2px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--panel);
+  cursor: pointer;
+  transition: border-color 160ms ease;
 }
 
-function collectStartEntries(container) {
-  return [...container.querySelectorAll(".player-entry-card")]
-    .map((card) => ({
-      playerName: card.querySelector('select[name="player"]')?.value || "",
-      investedEuro: parseNumber(card.querySelector('input[name="investment"]')?.value),
-    }))
-    .filter((entry) => entry.playerName && Number.isFinite(entry.investedEuro) && entry.investedEuro > 0);
+.player-select-dropdown:focus {
+  outline: none;
+  border-color: var(--hero-pink);
 }
 
-function collectChipUpdates(container) {
-  return [...container.querySelectorAll(".player-entry-card")]
-    .map((card) => ({
-      playerName: card.querySelector('select[name="player"]')?.value || "",
-      currentChips: parseNumber(card.querySelector('input[name="value"]')?.value),
-    }))
-    .filter((entry) => entry.playerName && Number.isFinite(entry.currentChips));
+.player-stats-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-function collectEndResults(container) {
-  return [...container.querySelectorAll(".player-entry-card")].reduce((accumulator, card) => {
-    const playerName = card.querySelector('select[name="player"]')?.value || "";
-    const result = parseNumber(card.querySelector('input[name="result"]')?.value);
-
-    if (playerName && Number.isFinite(result)) {
-      accumulator[playerName] = result;
-    }
-
-    return accumulator;
-  }, {});
+.stats-overview-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--shadow);
 }
 
-function buildMainRanking(playersMap) {
-  return Object.entries(playersMap)
-    .map(([name, ledger]) => ({
-      name,
-      total: Number(ledger?.total || 0),
-      locked: Number(ledger?.locked || 0),
-      available: Number(ledger?.available || 0),
-    }))
-    .sort((first, second) => second.total - first.total);
+.stats-main-position {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 16px;
 }
 
-function buildMiniRanking(playersMap, gameKey) {
-  return Object.entries(playersMap)
-    .map(([name, ledger]) => ({
-      name,
-      value: Number(ledger?.games?.[gameKey] || 0),
-    }))
-    .sort((first, second) => second.value - first.value)
-    .slice(0, 3);
+.stats-position-label {
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
-function renderMainRanking(container, ranking) {
-  const crownImg = '<img src="crown2.0.svg" alt="crown" style="width:70px;height:70px;object-fit:contain;">';
-  const top5 = ranking.slice(0, 5);
-  container.innerHTML = top5.length
-    ? top5
-        .map((player, index) => `
-          <article class="ranking-row ${index < 3 ? `top-${index + 1}` : ""}">
-            <div class="ranking-bar"></div>
-            <div class="ranking-left">
-              <span class="ranking-position">${index === 0 ? crownImg : index + 1}</span>
-              <div class="ranking-name">
-                <h2>${escapeHtml(player.name)}</h2>
-              </div>
-            </div>
-            <div class="ranking-amount">
-              <span class="total-amount">${currencyFormatter.format(player.total)}</span>
-              <span class="locked-amount">${currencyFormatter.format(player.locked).replace(' ', '')} in gioco</span>
-            </div>
-          </article>
-        `)
-        .join("")
-    : `
-      <div class="empty-state">
-        <h2>Nessun dato disponibile</h2>
-      </div>
-    `;
+.stats-position-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--hero-pink);
 }
 
-function renderMiniBoards(container, playersMap) {
-  const crownImg = '<img src="crown2.0.svg" alt="crown" style="width:36px;height:36px;object-fit:contain;">';
-  container.querySelectorAll("[data-mini-board]").forEach((board) => {
-    const gameKey = board.dataset.miniBoard;
-    const ranking = buildMiniRanking(playersMap, gameKey);
-
-    board.innerHTML = `
-      <h3>${GAME_LABELS[gameKey]}</h3>
-      ${
-        ranking.length
-          ? ranking
-              .slice(0, 3)
-              .map(
-                (player, index) => `
-                  <div class="mini-row ${index === 0 ? "mini-top" : ""}">
-                    <span>${index === 0 ? crownImg : index + 1}</span>
-                    <span>${escapeHtml(player.name)}</span>
-                    <strong>${currencyFormatter.format(player.value)}</strong>
-                  </div>
-                `
-              )
-              .join("")
-          : '<p class="mini-empty">Nessun risultato</p>'
-      }
-    `;
-  });
+.stats-money-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
 }
 
-function renderChipStack(container, breakdown) {
-  container.innerHTML = breakdown
-    .filter((chip) => chip.count > 0)
-    .map(
-      (chip) => `
-        <div class="chip-stack-item">
-          <span class="chip-mark chip-${chip.value}">${chip.value}</span>
-          <strong>${chip.count}</strong>
-        </div>
-      `
-    )
-    .join("");
+.money-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
 }
 
-function parseNumber(value) {
-  if (value === null || value === undefined || value === "") {
-    return null;
-  }
-
-  const parsed = Number(String(value).replace(",", "."));
-  return Number.isFinite(parsed) ? parsed : null;
+.money-label {
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
-function setStatus(node, message, isError) {
-  if (!node) {
-    return;
-  }
-
-  node.textContent = message;
-  node.style.color = isError ? "#000000" : "#444444";
+.money-value {
+  font-size: 1.1rem;
+  font-weight: 700;
 }
 
-function setRoomBadge(node, label, state) {
-  if (!node) {
-    return;
-  }
-
-  node.textContent = label;
-  node.dataset.state = state || "idle";
+.money-value.locked {
+  color: var(--bronze);
 }
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+.money-value.available {
+  color: var(--blue-strong);
+}
+
+.micro-rankings-section,
+.games-history-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.micro-rankings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.micro-ranking-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.micro-ranking-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.micro-peach {
+  border-left: 4px solid var(--peach-strong);
+}
+
+.micro-pink {
+  border-left: 4px solid var(--pink-strong);
+}
+
+.micro-blue {
+  border-left: 4px solid var(--blue-strong);
+}
+
+.micro-gray {
+  border-left: 4px solid var(--soft-gray);
+}
+
+.micro-position {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.micro-rank-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.micro-rank-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.games-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.game-history-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.game-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.game-history-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.game-net-result {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.game-net-result.positive {
+  color: #22c55e;
+}
+
+.game-net-result.negative {
+  color: #ef4444;
+}
+
+.game-history-stats {
+  display: flex;
+  justify-content: space-around;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.player-stats-empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--muted);
+}
+
+.no-games-message {
+  text-align: center;
+  color: var(--muted);
+  font-style: italic;
+  padding: 20px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
 }
