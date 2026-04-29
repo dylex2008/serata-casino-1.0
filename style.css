@@ -568,12 +568,13 @@ textarea:focus {
   gap: 0;
   flex: 1;
   overflow: visible;
+  border-radius: 50px 0 0 50px;
 }
 
 .ranking-position {
   width: 80px;
   height: 80px;
-  border-radius: 50%;
+  border-radius: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -615,19 +616,20 @@ textarea:focus {
   gap: 2px;
   flex: 1;
   min-width: 0;
-  padding-left: 20px;
+  padding-left: 28px;
 }
 
 .ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-name {
-  padding-left: 20px;
+  padding-left: 28px;
 }
 
 .ranking-row h2 {
-  font-size: 1.4rem;
+  font-size: 1.85rem;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-transform: uppercase;
 }
 
 .ranking-row p {
@@ -654,6 +656,12 @@ textarea:focus {
   font-size: 0.9rem;
   color: #027dbc;
   font-weight: 600;
+}
+
+.ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-position {
+  background: #FFFFFF;
+  color: #000000;
+  border: 2px solid #000000;
 }
 
 .ranking-bar {
@@ -721,10 +729,6 @@ textarea:focus {
 .top-3 .ranking-amount,
 .top-3 .ranking-amount .locked-amount {
   color: #FFFFFF;
-}
-
-.ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-position {
-  display: none;
 }
 
 .ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-bar {
