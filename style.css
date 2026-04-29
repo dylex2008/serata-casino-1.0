@@ -581,7 +581,7 @@ textarea:focus {
   background: #FFFFFF;
   color: #000000;
   font-weight: 800;
-  font-size: 2rem;
+  font-size: 3rem;
   flex-shrink: 0;
   margin-left: -8px;
 }
@@ -600,8 +600,8 @@ textarea:focus {
 }
 
 .ranking-position img {
-  width: 70px;
-  height: 70px;
+  width: 105px;
+  height: 105px;
   object-fit: contain;
 }
 
@@ -624,7 +624,7 @@ textarea:focus {
 }
 
 .ranking-row h2 {
-  font-size: 2rem;
+  font-size: 3rem;
   font-weight: 800;
   white-space: nowrap;
   overflow: hidden;
@@ -643,17 +643,17 @@ textarea:focus {
   justify-content: center;
   padding: 0 24px;
   font-weight: 800;
-  font-size: 1.4rem;
+  font-size: 2.1rem;
   background: transparent;
   min-width: 160px;
 }
 
 .ranking-row .ranking-amount .total-amount {
-  font-size: 1.4rem;
+  font-size: 2.1rem;
 }
 
 .ranking-row .ranking-amount .locked-amount {
-  font-size: 0.9rem;
+  font-size: 1.35rem;
   color: #027dbc;
   font-weight: 600;
 }
@@ -889,7 +889,7 @@ textarea:focus {
 }
 
 .leaderboard-mockup-head h1 {
-  font-size: clamp(2rem, 3vw, 3.4rem);
+  font-size: clamp(4rem, 6vw, 6.8rem);
   letter-spacing: -0.05em;
 }
 
