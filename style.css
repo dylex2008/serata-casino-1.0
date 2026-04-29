@@ -1000,6 +1000,7 @@ textarea:focus {
   width: 1.44rem;
   height: 1.44rem;
   object-fit: contain;
+  margin-left: -3px;
 }
 
 .mini-mockup-card h3 {
