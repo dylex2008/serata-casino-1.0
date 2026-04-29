@@ -1054,28 +1054,6 @@ textarea:focus {
   padding: 20px 0;
 }
 
-.qr-section {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 0;
-}
-
-.qr-label {
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: var(--text);
-}
-
-.qr-image {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-}
-
 @media (max-width: 1180px) {
   .hero-buttons,
   .hero-forms,
