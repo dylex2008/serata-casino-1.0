@@ -787,7 +787,7 @@ function renderMainRanking(container, ranking) {
           <article class="ranking-row ${index < 3 ? `top-${index + 1}` : ""}">
             <div class="ranking-bar"></div>
             <div class="ranking-left">
-              <span class="ranking-position">${index === 0 ? crownImg : index + 1}</span>
+              ${index < 3 ? `<span class="ranking-position">${index === 0 ? crownImg : index + 1}</span>` : ''}
               <div class="ranking-name">
                 <h2>${escapeHtml(player.name)}</h2>
               </div>
