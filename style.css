@@ -862,7 +862,7 @@ textarea:focus {
 
 .leaderboard-mockup-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
   gap: 18px;
 }
 
@@ -875,7 +875,7 @@ textarea:focus {
   border: none;
   box-shadow: none;
   border-radius: 0;
-  padding: 16px;
+  padding: 12px;
   height: 100%;
 }
 
