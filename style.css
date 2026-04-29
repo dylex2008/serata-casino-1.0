@@ -946,7 +946,7 @@ textarea:focus {
 }
 
 .mini-mockup-card h3 {
-  font-size: 1.85rem;
+  font-size: 0.95rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -970,7 +970,7 @@ textarea:focus {
 
 .mini-mockup-card .mini-row span:first-child {
   font-weight: 800;
-  font-size: 1.8rem;
+  font-size: 0.9rem;
   width: 40px;
   text-align: center;
 }
@@ -978,7 +978,7 @@ textarea:focus {
 .mini-mockup-card .mini-row span:nth-child(2) {
   flex: 1;
   font-weight: 600;
-  font-size: 1.6rem;
+  font-size: 0.8rem;
   padding: 0 8px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -986,7 +986,7 @@ textarea:focus {
 }
 
 .mini-mockup-card .mini-row strong {
-  font-size: 1.4rem;
+  font-size: 0.7rem;
   font-weight: 800;
 }
 
@@ -1001,8 +1001,8 @@ textarea:focus {
 }
 
 .mini-mockup-card .mini-top span:first-child img {
-  width: 1.6rem;
-  height: 1.6rem;
+  width: 0.8rem;
+  height: 0.8rem;
   object-fit: contain;
 }
 
