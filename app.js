@@ -779,7 +779,7 @@ function buildMiniRanking(playersMap, gameKey) {
 }
 
 function renderMainRanking(container, ranking) {
-  const crownImg = '<img src="crown2.0.svg" alt="crown" style="width:60px;height:60px;object-fit:contain;filter:invert(1);">';
+  const crownImg = '<img src="crown2.0.svg" alt="crown" style="width:60px;height:60px;object-fit:contain;">';
   const top5 = ranking.slice(0, 5);
   container.innerHTML = top5.length
     ? top5
@@ -790,10 +790,12 @@ function renderMainRanking(container, ranking) {
               <span class="ranking-position">${index === 0 ? crownImg : index + 1}</span>
               <div class="ranking-name">
                 <h2>${escapeHtml(player.name)}</h2>
-                <p>Bloccato ${currencyFormatter.format(player.locked)} · Disponibile ${currencyFormatter.format(player.available)}</p>
               </div>
             </div>
-            <div class="ranking-amount">${currencyFormatter.format(player.total)}</div>
+            <div class="ranking-amount">
+              <span class="total-amount">${currencyFormatter.format(player.total)}</span>
+              <span class="locked-amount">${currencyFormatter.format(player.locked)} € in gioco</span>
+            </div>
           </article>
         `)
         .join("")
