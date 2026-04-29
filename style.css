@@ -769,8 +769,8 @@ textarea:focus {
 
 .mini-top {
   background: transparent;
-  margin: 0 -8px;
-  padding: 10px 8px 0;
+  margin: 0;
+  padding: 10px 0;
 }
 
 .mini-board[data-mini-board="poker"] .mini-top strong,
@@ -946,7 +946,7 @@ textarea:focus {
 }
 
 .mini-mockup-card h3 {
-  font-size: 1.1rem;
+  font-size: 1.85rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -960,36 +960,8 @@ textarea:focus {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
-}
-
-.mini-mockup-card .mini-row:nth-child(2),
-.mini-mockup-card .mini-row:nth-child(3) {
-  border-bottom: 2px solid;
-}
-
-.mini-mockup-card .mini-row:nth-child(4) {
+  padding: 10px 0;
   border-bottom: none;
-}
-
-.mini-mockup-peach .mini-row:nth-child(2),
-.mini-mockup-peach .mini-row:nth-child(3) {
-  border-color: #f39c35;
-}
-
-.mini-mockup-blue .mini-row:nth-child(2),
-.mini-mockup-blue .mini-row:nth-child(3) {
-  border-color: #027dbc;
-}
-
-.mini-mockup-pink .mini-row:nth-child(2),
-.mini-mockup-pink .mini-row:nth-child(3) {
-  border-color: #c23c83;
-}
-
-.mini-mockup-gray .mini-row:nth-child(2),
-.mini-mockup-gray .mini-row:nth-child(3) {
-  border-color: #000000;
 }
 
 .mini-mockup-card .mini-row:first-of-type {
@@ -997,16 +969,16 @@ textarea:focus {
 }
 
 .mini-mockup-card .mini-row span:first-child {
-  font-weight: 700;
-  font-size: 1rem;
+  font-weight: 800;
+  font-size: 1.8rem;
   width: 40px;
   text-align: center;
 }
 
 .mini-mockup-card .mini-row span:nth-child(2) {
   flex: 1;
-  font-weight: 500;
-  font-size: 0.9rem;
+  font-weight: 600;
+  font-size: 1.6rem;
   padding: 0 8px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1014,12 +986,12 @@ textarea:focus {
 }
 
 .mini-mockup-card .mini-row strong {
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 1.4rem;
+  font-weight: 800;
 }
 
 .mini-mockup-card .mini-top {
-  gap: 4px;
+  gap: 0;
 }
 
 .mini-mockup-card .mini-top span:first-child {
@@ -1029,8 +1001,8 @@ textarea:focus {
 }
 
 .mini-mockup-card .mini-top span:first-child img {
-  width: 36px;
-  height: 36px;
+  width: 1.6rem;
+  height: 1.6rem;
   object-fit: contain;
 }
 
