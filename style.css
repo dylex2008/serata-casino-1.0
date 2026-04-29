@@ -976,18 +976,19 @@ textarea:focus {
 .mini-mockup-card .mini-row span:first-child {
   font-weight: 800;
   font-size: 1.44rem;
-  width: 40px;
-  text-align: center;
+  width: 30px;
+  text-align: left;
 }
 
 .mini-mockup-card .mini-row span:nth-child(2) {
   flex: 1;
   font-weight: 600;
   font-size: 1.32rem;
-  padding: 0 8px;
+  padding: 0 4px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: left;
 }
 
 .mini-mockup-card .mini-row strong {
