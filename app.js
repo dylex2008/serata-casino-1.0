@@ -794,7 +794,7 @@ function renderMainRanking(container, ranking) {
             </div>
             <div class="ranking-amount">
               <span class="total-amount">${currencyFormatter.format(player.total)}</span>
-              <span class="locked-amount">${currencyFormatter.format(player.locked)} € in gioco</span>
+              <span class="locked-amount">${currencyFormatter.format(player.locked).replace(' ', '')} in gioco</span>
             </div>
           </article>
         `)
