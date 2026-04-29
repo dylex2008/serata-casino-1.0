@@ -554,6 +554,7 @@ textarea:focus {
   align-items: stretch;
   overflow: visible;
   box-shadow: none;
+  border-radius: 0;
 }
 
 .ranking-left {
@@ -561,7 +562,6 @@ textarea:focus {
   align-items: center;
   gap: 0;
   flex: 1;
-  border-radius: 50px 0 0 50px;
   overflow: visible;
 }
 
@@ -572,11 +572,12 @@ textarea:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #000000;
-  color: #FFFFFF;
+  background: #FFFFFF;
+  color: #000000;
   font-weight: 800;
   font-size: 1.4rem;
   flex-shrink: 0;
+  margin-left: -8px;
 }
 
 .ranking-bar {
@@ -605,13 +606,15 @@ textarea:focus {
 .ranking-row .ranking-name {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 2px;
   flex: 1;
   min-width: 0;
+  padding-left: 16px;
 }
 
 .ranking-row h2 {
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -619,19 +622,29 @@ textarea:focus {
 }
 
 .ranking-row p {
-  color: #7E7E7E;
-  font-size: 0.85rem;
+  display: none;
 }
 
 .ranking-row .ranking-amount {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
   padding: 0 24px;
   font-weight: 800;
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   background: transparent;
   min-width: 160px;
-  justify-content: flex-end;
+}
+
+.ranking-row .ranking-amount .total-amount {
+  font-size: 1.4rem;
+}
+
+.ranking-row .ranking-amount .locked-amount {
+  font-size: 0.9rem;
+  color: #027dbc;
+  font-weight: 600;
 }
 
 .ranking-bar {
@@ -649,12 +662,17 @@ textarea:focus {
 }
 
 .top-1 .ranking-position {
-  background: #000000;
+  background: #FFFFFF;
+}
+
+.top-1 .ranking-position img {
+  filter: none;
 }
 
 .top-1 .ranking-name h2,
 .top-1 .ranking-name p,
-.top-1 .ranking-amount {
+.top-1 .ranking-amount,
+.top-1 .ranking-amount .locked-amount {
   color: #FFFFFF;
 }
 
@@ -667,12 +685,13 @@ textarea:focus {
 }
 
 .top-2 .ranking-position {
-  background: #000000;
+  background: #FFFFFF;
 }
 
 .top-2 .ranking-name h2,
 .top-2 .ranking-name p,
-.top-2 .ranking-amount {
+.top-2 .ranking-amount,
+.top-2 .ranking-amount .locked-amount {
   color: #FFFFFF;
 }
 
@@ -685,12 +704,13 @@ textarea:focus {
 }
 
 .top-3 .ranking-position {
-  background: #000000;
+  background: #FFFFFF;
 }
 
 .top-3 .ranking-name h2,
 .top-3 .ranking-name p,
-.top-3 .ranking-amount {
+.top-3 .ranking-amount,
+.top-3 .ranking-amount .locked-amount {
   color: #FFFFFF;
 }
 
