@@ -577,7 +577,7 @@ textarea:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #7E7E7E;
+  background: #000000;
   color: #FFFFFF;
   font-weight: 800;
   font-size: 1.4rem;
@@ -585,8 +585,8 @@ textarea:focus {
 }
 
 .ranking-position img {
-  width: 36px;
-  height: 36px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
 }
 
@@ -637,12 +637,11 @@ textarea:focus {
 }
 
 .top-1 .ranking-bar {
-  background: #E5A353;
+  background: #f39c35;
 }
 
 .top-1 .ranking-position {
-  background: transparent !important;
-  border: 3px solid #E5A353;
+  background: #000000;
 }
 
 .top-2 {
@@ -650,11 +649,11 @@ textarea:focus {
 }
 
 .top-2 .ranking-bar {
-  background: #3D7EB6;
+  background: #027dbc;
 }
 
 .top-2 .ranking-position {
-  background: #3D7EB6;
+  background: #000000;
 }
 
 .top-3 {
@@ -662,19 +661,19 @@ textarea:focus {
 }
 
 .top-3 .ranking-bar {
-  background: #B44D7F;
+  background: #c23c83;
 }
 
 .top-3 .ranking-position {
-  background: #B44D7F;
+  background: #000000;
 }
 
 .ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-position {
-  background: #7E7E7E;
+  background: #000000;
 }
 
 .ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-bar {
-  background: #FFFFFF;
+  background: #000000;
 }
 
 .ranking-row:not(.top-1):not(.top-2):not(.top-3) {
@@ -910,7 +909,7 @@ textarea:focus {
 .mini-mockup-card .mini-row span:first-child {
   font-weight: 700;
   font-size: 1rem;
-  width: 24px;
+  width: 40px;
   text-align: center;
 }
 
@@ -940,8 +939,8 @@ textarea:focus {
 }
 
 .mini-mockup-card .mini-top span:first-child img {
-  width: 20px;
-  height: 20px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
 }
 
