@@ -552,23 +552,22 @@ textarea:focus {
   justify-content: flex-start;
   gap: 0;
   align-items: stretch;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: none;
-  padding-left: 0;
 }
 
 .ranking-left {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 16px;
+  gap: 0;
   flex: 1;
   border-radius: 50px 0 0 50px;
+  overflow: visible;
 }
 
 .ranking-position {
-  width: 70px;
-  height: 70px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -578,7 +577,6 @@ textarea:focus {
   font-weight: 800;
   font-size: 1.4rem;
   flex-shrink: 0;
-  margin-left: 0;
 }
 
 .ranking-bar {
@@ -592,28 +590,6 @@ textarea:focus {
 .top-2 .ranking-bar,
 .top-3 .ranking-bar {
   display: none;
-}
-
-.ranking-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 0 16px 0 0;
-  flex: 1;
-}
-
-.ranking-position {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #000000;
-  color: #FFFFFF;
-  font-weight: 800;
-  font-size: 1.4rem;
-  flex-shrink: 0;
 }
 
 .ranking-position img {
@@ -653,7 +629,7 @@ textarea:focus {
   padding: 0 24px;
   font-weight: 800;
   font-size: 1.3rem;
-  background: rgba(255, 255, 255, 0.6);
+  background: transparent;
   min-width: 160px;
   justify-content: flex-end;
 }
