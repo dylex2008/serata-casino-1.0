@@ -783,14 +783,15 @@ function renderMainRanking(container, ranking) {
     ? ranking
         .map((player, index) => `
           <article class="ranking-row ${index < 3 ? `top-${index + 1}` : ""}">
+            <div class="ranking-bar"></div>
             <div class="ranking-left">
-              <span class="ranking-position">${index + 1}</span>
-              <div>
+              <span class="ranking-position ${index === 0 ? "crown-position" : ""}">${index === 0 ? '<img src="nuova%20grafica/crown.png" alt="crown" style="width:24px;height:24px;object-fit:contain;">' : index + 1}</span>
+              <div class="ranking-name">
                 <h2>${escapeHtml(player.name)}</h2>
                 <p>Bloccato ${currencyFormatter.format(player.locked)} · Disponibile ${currencyFormatter.format(player.available)}</p>
               </div>
             </div>
-            <strong>${currencyFormatter.format(player.total)}</strong>
+            <div class="ranking-amount">${currencyFormatter.format(player.total)}</div>
           </article>
         `)
         .join("")
@@ -811,10 +812,11 @@ function renderMiniBoards(container, playersMap) {
       ${
         ranking.length
           ? ranking
+              .slice(0, 3)
               .map(
                 (player, index) => `
                   <div class="mini-row ${index === 0 ? "mini-top" : ""}">
-                    <span>${index + 1}</span>
+                    <span>${index === 0 ? '<img src="nuova%20grafica/crown.png" alt="crown" style="width:18px;height:18px;object-fit:contain;">' : index + 1}</span>
                     <span>${escapeHtml(player.name)}</span>
                     <strong>${currencyFormatter.format(player.value)}</strong>
                   </div>
