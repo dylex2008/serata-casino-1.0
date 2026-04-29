@@ -1054,15 +1054,29 @@ textarea:focus {
   padding: 20px 0;
 }
 
-.qr-link {
-  display: block;
-  text-align: right;
+.qr-section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
   padding: 16px 0;
 }
 
+.qr-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.qr-link {
+  display: block;
+}
+
 .qr-image {
-  width: 100px;
-  height: 100px;
+  width: 90px;
+  height: 90px;
   object-fit: contain;
   cursor: pointer;
 }
