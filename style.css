@@ -581,7 +581,7 @@ textarea:focus {
   background: #FFFFFF;
   color: #000000;
   font-weight: 800;
-  font-size: 3rem;
+  font-size: 2rem;
   flex-shrink: 0;
   margin-left: -8px;
 }
@@ -600,8 +600,8 @@ textarea:focus {
 }
 
 .ranking-position img {
-  width: 105px;
-  height: 105px;
+  width: 70px;
+  height: 70px;
   object-fit: contain;
 }
 
@@ -624,7 +624,7 @@ textarea:focus {
 }
 
 .ranking-row h2 {
-  font-size: 3rem;
+  font-size: 2rem;
   font-weight: 800;
   white-space: nowrap;
   overflow: hidden;
@@ -643,17 +643,17 @@ textarea:focus {
   justify-content: center;
   padding: 0 24px;
   font-weight: 800;
-  font-size: 2.1rem;
+  font-size: 1.4rem;
   background: transparent;
   min-width: 160px;
 }
 
 .ranking-row .ranking-amount .total-amount {
-  font-size: 2.1rem;
+  font-size: 1.4rem;
 }
 
 .ranking-row .ranking-amount .locked-amount {
-  font-size: 1.35rem;
+  font-size: 0.9rem;
   color: #027dbc;
   font-weight: 600;
 }
@@ -889,7 +889,7 @@ textarea:focus {
 }
 
 .leaderboard-mockup-head h1 {
-  font-size: clamp(4rem, 6vw, 6.8rem);
+  font-size: clamp(2rem, 3vw, 3.4rem);
   letter-spacing: -0.05em;
 }
 
@@ -946,7 +946,7 @@ textarea:focus {
 }
 
 .mini-mockup-card h3 {
-  font-size: 0.95rem;
+  font-size: 1.9rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -971,7 +971,7 @@ textarea:focus {
 
 .mini-mockup-card .mini-row span:first-child {
   font-weight: 800;
-  font-size: 1.2rem;
+  font-size: 1.8rem;
   width: 40px;
   text-align: center;
 }
@@ -979,7 +979,7 @@ textarea:focus {
 .mini-mockup-card .mini-row span:nth-child(2) {
   flex: 1;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 1.65rem;
   padding: 0 8px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -987,7 +987,7 @@ textarea:focus {
 }
 
 .mini-mockup-card .mini-row strong {
-  font-size: 1rem;
+  font-size: 1.5rem;
   font-weight: 800;
 }
 
@@ -1002,8 +1002,8 @@ textarea:focus {
 }
 
 .mini-mockup-card .mini-top span:first-child img {
-  width: 1.2rem;
-  height: 1.2rem;
+  width: 1.8rem;
+  height: 1.8rem;
   object-fit: contain;
 }
 
