@@ -779,13 +779,14 @@ function buildMiniRanking(playersMap, gameKey) {
 }
 
 function renderMainRanking(container, ranking) {
+  const crownImg = '<img src="nuova%20grafica/crown.png" alt="crown" style="width:36px;height:36px;object-fit:contain;">';
   container.innerHTML = ranking.length
     ? ranking
         .map((player, index) => `
           <article class="ranking-row ${index < 3 ? `top-${index + 1}` : ""}">
             <div class="ranking-bar"></div>
             <div class="ranking-left">
-              <span class="ranking-position ${index === 0 ? "crown-position" : ""}">${index === 0 ? '<img src="nuova%20grafica/crown.png" alt="crown" style="width:24px;height:24px;object-fit:contain;">' : index + 1}</span>
+              <span class="ranking-position">${index === 0 ? crownImg : index + 1}</span>
               <div class="ranking-name">
                 <h2>${escapeHtml(player.name)}</h2>
                 <p>Bloccato ${currencyFormatter.format(player.locked)} · Disponibile ${currencyFormatter.format(player.available)}</p>
@@ -803,6 +804,7 @@ function renderMainRanking(container, ranking) {
 }
 
 function renderMiniBoards(container, playersMap) {
+  const crownImg = '<img src="nuova%20grafica/crown.png" alt="crown" style="width:18px;height:18px;object-fit:contain;">';
   container.querySelectorAll("[data-mini-board]").forEach((board) => {
     const gameKey = board.dataset.miniBoard;
     const ranking = buildMiniRanking(playersMap, gameKey);
@@ -816,7 +818,7 @@ function renderMiniBoards(container, playersMap) {
               .map(
                 (player, index) => `
                   <div class="mini-row ${index === 0 ? "mini-top" : ""}">
-                    <span>${index === 0 ? '<img src="nuova%20grafica/crown.png" alt="crown" style="width:18px;height:18px;object-fit:contain;">' : index + 1}</span>
+                    <span>${index === 0 ? crownImg : index + 1}</span>
                     <span>${escapeHtml(player.name)}</span>
                     <strong>${currencyFormatter.format(player.value)}</strong>
                   </div>
