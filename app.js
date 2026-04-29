@@ -182,6 +182,8 @@ async function initRankingPage() {
   const roomNode = document.querySelector("#leaderboard-game-id");
   const roomStateNode = document.querySelector("#leaderboard-game-state");
   const activeGameNode = document.querySelector("#leaderboard-active-games");
+  const qrImage = document.querySelector("#qr-image");
+  const qrLink = document.querySelector("#qr-link");
 
   if (hasPlaceholderConfig) {
     liveIndicatorNode.textContent = "Firebase config missing";
@@ -195,6 +197,13 @@ async function initRankingPage() {
   }
 
   liveIndicatorNode.textContent = "Realtime attivo";
+
+  const baseUrl = window.location.origin + window.location.pathname.replace("leaderboard.html", "");
+  const statsUrl = `${baseUrl}player-stats.html?room=${roomCode}`;
+  const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(statsUrl)}`;
+
+  qrImage.src = qrApiUrl;
+  qrLink.href = statsUrl;
 
   attachRoomWatcher(roomCode, (room) => {
     roomNode.textContent = roomCode;
