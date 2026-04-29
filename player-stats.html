@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Statistica Giocatore Singolo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="shell full-shell">
+      <header class="leaderboard-topbar">
+        <a class="topbar-pill" href="index.html">Home</a>
+        <div class="topbar-center">
+          <strong id="player-stats-room-code" class="topbar-room">...</strong>
+          <strong id="player-stats-room-state" class="topbar-state">ATTIVA</strong>
+        </div>
+        <div class="topbar-actions">
+          <a class="topbar-pill" href="input.html">Giochi</a>
+        </div>
+      </header>
+
+      <section class="player-stats-container">
+        <div class="player-select-section">
+          <label for="player-select" class="player-select-label">Seleziona Giocatore</label>
+          <select id="player-select" class="player-select-dropdown">
+            <option value="">-- Seleziona un giocatore --</option>
+          </select>
+        </div>
+
+        <div id="player-stats-content" class="player-stats-content" hidden>
+          <section class="stats-overview-card">
+            <div class="stats-main-position">
+              <span class="stats-position-label">Posizione Generale</span>
+              <span id="general-position" class="stats-position-value">-</span>
+            </div>
+            <div class="stats-money-summary">
+              <div class="money-item">
+                <span class="money-label">Totale</span>
+                <span id="player-total" class="money-value">€0,00</span>
+              </div>
+              <div class="money-item">
+                <span class="money-label">Bloccato</span>
+                <span id="player-locked" class="money-value locked">€0,00</span>
+              </div>
+              <div class="money-item">
+                <span class="money-label">Disponibile</span>
+                <span id="player-available" class="money-value available">€0,00</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="micro-rankings-section">
+            <h2 class="section-title">Posizioni nelle Classifiche</h2>
+            <div class="micro-rankings-grid">
+              <div class="micro-ranking-card micro-peach" data-game="poker">
+                <h3>Poker</h3>
+                <div class="micro-position">
+                  <span class="micro-rank-label">Posizione</span>
+                  <span id="position-poker" class="micro-rank-value">-</span>
+                </div>
+              </div>
+              <div class="micro-ranking-card micro-pink" data-game="blackjack">
+                <h3>Blackjack</h3>
+                <div class="micro-position">
+                  <span class="micro-rank-label">Posizione</span>
+                  <span id="position-blackjack" class="micro-rank-value">-</span>
+                </div>
+              </div>
+              <div class="micro-ranking-card micro-blue" data-game="horse_racing">
+                <h3>Cavalli</h3>
+                <div class="micro-position">
+                  <span class="micro-rank-label">Posizione</span>
+                  <span id="position-horse_racing" class="micro-rank-value">-</span>
+                </div>
+              </div>
+              <div class="micro-ranking-card micro-gray" data-game="roulette">
+                <h3>Roulette</h3>
+                <div class="micro-position">
+                  <span class="micro-rank-label">Posizione</span>
+                  <span id="position-roulette" class="micro-rank-value">-</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="games-history-section">
+            <h2 class="section-title">Storico Giochi</h2>
+            <div id="games-history-list" class="games-history-list">
+              <p class="no-games-message">Nessun gioco disputato</p>
+            </div>
+          </section>
+        </div>
+
+        <div id="player-stats-empty" class="player-stats-empty" hidden>
+          <p>Seleziona un giocatore per vedere le sue statistiche</p>
+        </div>
+      </section>
+
+      <p id="player-stats-status" class="status-text center-text" aria-live="polite"></p>
+    </main>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
