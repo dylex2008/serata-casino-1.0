@@ -746,11 +746,6 @@ textarea:focus {
   color: #000000;
 }
 
-.top-3 {
-  background: linear-gradient(180deg, rgba(183, 122, 87, 0.14), #fff);
-  border-color: var(--bronze);
-}
-
 .grid-four {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
