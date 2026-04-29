@@ -549,24 +549,56 @@ textarea:focus {
   height: 80px;
   padding: 0;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 0;
   align-items: stretch;
   overflow: hidden;
   box-shadow: none;
+  padding-left: 0;
+}
+
+.ranking-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  flex: 1;
+  border-radius: 50px 0 0 50px;
+}
+
+.ranking-position {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000000;
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  margin-left: 0;
 }
 
 .ranking-bar {
   width: 12px;
   height: 100%;
   flex-shrink: 0;
+  border-radius: 50px 0 0 50px;
+}
+
+.top-1 .ranking-bar,
+.top-2 .ranking-bar,
+.top-3 .ranking-bar {
+  display: none;
 }
 
 .ranking-left {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 0 20px;
+  gap: 14px;
+  padding: 0 16px 0 0;
   flex: 1;
 }
 
@@ -633,39 +665,57 @@ textarea:focus {
 }
 
 .top-1 {
-  background: #FFFFFF;
+  background: #f39c35;
 }
 
 .top-1 .ranking-bar {
-  background: #f39c35;
+  display: none;
 }
 
 .top-1 .ranking-position {
   background: #000000;
 }
 
+.top-1 .ranking-name h2,
+.top-1 .ranking-name p,
+.top-1 .ranking-amount {
+  color: #FFFFFF;
+}
+
 .top-2 {
-  background: #FFFFFF;
+  background: #027dbc;
 }
 
 .top-2 .ranking-bar {
-  background: #027dbc;
+  display: none;
 }
 
 .top-2 .ranking-position {
   background: #000000;
 }
 
+.top-2 .ranking-name h2,
+.top-2 .ranking-name p,
+.top-2 .ranking-amount {
+  color: #FFFFFF;
+}
+
 .top-3 {
-  background: #FFFFFF;
+  background: #c23c83;
 }
 
 .top-3 .ranking-bar {
-  background: #c23c83;
+  display: none;
 }
 
 .top-3 .ranking-position {
   background: #000000;
+}
+
+.top-3 .ranking-name h2,
+.top-3 .ranking-name p,
+.top-3 .ranking-amount {
+  color: #FFFFFF;
 }
 
 .ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-position {
@@ -678,6 +728,12 @@ textarea:focus {
 
 .ranking-row:not(.top-1):not(.top-2):not(.top-3) {
   background: #FFFFFF;
+}
+
+.ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-name h2,
+.ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-name p,
+.ranking-row:not(.top-1):not(.top-2):not(.top-3) .ranking-amount {
+  color: #000000;
 }
   border-color: var(--silver);
 }
