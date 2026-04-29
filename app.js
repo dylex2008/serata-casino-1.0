@@ -817,7 +817,7 @@ function renderMiniBoards(container, playersMap) {
       ${
         ranking.length
           ? ranking
-              .slice(0, 3)
+              .slice(0, 2)
               .map(
                 (player, index) => `
                   <div class="mini-row ${index === 0 ? "mini-top" : ""}">
