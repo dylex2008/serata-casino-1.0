@@ -960,8 +960,9 @@ textarea:focus {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 0;
+  padding: 12px 0;
   border-bottom: none;
+  vertical-align: middle;
 }
 
 .mini-mockup-card .mini-row:first-of-type {
@@ -970,7 +971,7 @@ textarea:focus {
 
 .mini-mockup-card .mini-row span:first-child {
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: 1.2rem;
   width: 40px;
   text-align: center;
 }
@@ -978,7 +979,7 @@ textarea:focus {
 .mini-mockup-card .mini-row span:nth-child(2) {
   flex: 1;
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 1.1rem;
   padding: 0 8px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -986,7 +987,7 @@ textarea:focus {
 }
 
 .mini-mockup-card .mini-row strong {
-  font-size: 0.7rem;
+  font-size: 1rem;
   font-weight: 800;
 }
 
@@ -1001,8 +1002,8 @@ textarea:focus {
 }
 
 .mini-mockup-card .mini-top span:first-child img {
-  width: 0.8rem;
-  height: 0.8rem;
+  width: 1.2rem;
+  height: 1.2rem;
   object-fit: contain;
 }
 
