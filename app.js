@@ -780,8 +780,9 @@ function buildMiniRanking(playersMap, gameKey) {
 
 function renderMainRanking(container, ranking) {
   const crownImg = '<img src="crown2.0.svg" alt="crown" style="width:60px;height:60px;object-fit:contain;filter:invert(1);">';
-  container.innerHTML = ranking.length
-    ? ranking
+  const top5 = ranking.slice(0, 5);
+  container.innerHTML = top5.length
+    ? top5
         .map((player, index) => `
           <article class="ranking-row ${index < 3 ? `top-${index + 1}` : ""}">
             <div class="ranking-bar"></div>
