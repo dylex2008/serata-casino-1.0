@@ -779,7 +779,7 @@ function buildMiniRanking(playersMap, gameKey) {
 }
 
 function renderMainRanking(container, ranking) {
-  const crownImg = '<img src="crown2.0.svg" alt="crown" style="width:60px;height:60px;object-fit:contain;">';
+  const crownImg = '<img src="crown2.0.svg" alt="crown" style="width:70px;height:70px;object-fit:contain;">';
   const top5 = ranking.slice(0, 5);
   container.innerHTML = top5.length
     ? top5
