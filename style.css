@@ -770,7 +770,7 @@ textarea:focus {
 .mini-top {
   background: transparent;
   margin: 0;
-  padding: 10px 0;
+  padding: 12px 0;
 }
 
 .mini-board[data-mini-board="poker"] .mini-top strong,
@@ -971,9 +971,41 @@ textarea:focus {
 
 .mini-mockup-card .mini-row span:first-child {
   font-weight: 800;
-  font-size: 1.8rem;
+  font-size: 1.44rem;
   width: 40px;
   text-align: center;
+}
+
+.mini-mockup-card .mini-row span:nth-child(2) {
+  flex: 1;
+  font-weight: 600;
+  font-size: 1.32rem;
+  padding: 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-mockup-card .mini-row strong {
+  font-size: 1.2rem;
+  font-weight: 400;
+}
+
+.mini-mockup-card .mini-top span:first-child img {
+  width: 1.44rem;
+  height: 1.44rem;
+  object-fit: contain;
+}
+
+.mini-mockup-card h3 {
+  font-size: 1.52rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+  padding-bottom: 12px;
+  text-align: center;
+  border-bottom: none;
 }
 
 .mini-mockup-card .mini-row span:nth-child(2) {
@@ -993,6 +1025,7 @@ textarea:focus {
 
 .mini-mockup-card .mini-top {
   gap: 0;
+  margin: 0;
 }
 
 .mini-mockup-card .mini-top span:first-child {
