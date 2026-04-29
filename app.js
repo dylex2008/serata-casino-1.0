@@ -779,7 +779,7 @@ function buildMiniRanking(playersMap, gameKey) {
 }
 
 function renderMainRanking(container, ranking) {
-  const crownImg = '<img src="nuova%20grafica/crown.png" alt="crown" style="width:36px;height:36px;object-fit:contain;">';
+  const crownImg = '<img src="crown.png" alt="crown" style="width:36px;height:36px;object-fit:contain;">';
   container.innerHTML = ranking.length
     ? ranking
         .map((player, index) => `
@@ -804,7 +804,7 @@ function renderMainRanking(container, ranking) {
 }
 
 function renderMiniBoards(container, playersMap) {
-  const crownImg = '<img src="nuova%20grafica/crown.png" alt="crown" style="width:18px;height:18px;object-fit:contain;">';
+  const crownImg = '<img src="crown.png" alt="crown" style="width:18px;height:18px;object-fit:contain;">';
   container.querySelectorAll("[data-mini-board]").forEach((board) => {
     const gameKey = board.dataset.miniBoard;
     const ranking = buildMiniRanking(playersMap, gameKey);
