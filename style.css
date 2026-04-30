@@ -473,15 +473,15 @@ textarea:focus {
   font-weight: 700;
 }
 
-.horse-result-phase {
+.horse-winner-section {
   padding: 20px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 16px;
-  margin-bottom: 20px;
+  margin-top: 20px;
 }
 
-.horse-result-phase h3 {
+.horse-winner-section h3 {
   margin-bottom: 16px;
   font-size: 1.2rem;
 }
