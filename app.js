@@ -990,7 +990,7 @@ async function initHorseRacingPage() {
     finishBtn.disabled = false;
     summaryStatus.textContent = "In Corso";
 
-    resultPhase.hidden = false;
+    document.querySelector("#horse-winner-section").hidden = false;
     renderWinnerSelection();
   });
 
@@ -1004,13 +1004,13 @@ async function initHorseRacingPage() {
 
     const participantCount = horseRacingState.participants.length;
     const multiplier = 1 + (participantCount - 1) * 0.25;
+    const winnerBet = horseRacingState.participants.find(p => p.name === horseRacingState.selectedWinner).bet;
+    const winAmount = winnerBet * multiplier;
 
     const results = {};
     horseRacingState.participants.forEach(p => {
       if (p.name === horseRacingState.selectedWinner) {
-        const totalBet = horseRacingState.participants.reduce((sum, p2) => sum + p2.bet, 0);
-        const winAmount = (totalBet * multiplier) - p.bet;
-        results[p.name] = winAmount;
+        results[p.name] = winAmount - p.bet;
       } else {
         results[p.name] = -p.bet;
       }
@@ -1018,13 +1018,13 @@ async function initHorseRacingPage() {
 
     try {
       await endSubGame(roomCode, "horse_racing", results);
-      setStatus(statusNode, "Partita terminata! Classifica aggiornata.", false);
+      setStatus(statusNode, `Partita terminata! ${escapeHtml(horseRacingState.selectedWinner)} vince ${currencyFormatter.format(winAmount)}`, false);
 
       horseRacingState.participants = [];
       horseRacingState.selectedWinner = null;
       renderHorsePlayersList();
       updateHorseSummary();
-      resultPhase.hidden = true;
+      document.querySelector("#horse-winner-section").hidden = true;
       startBtn.disabled = false;
       finishBtn.disabled = true;
       summaryStatus.textContent = "Pronto";
