@@ -74,6 +74,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (document.querySelector("#player-select")) {
     initPlayerStatsPage();
   }
+
+  if (document.querySelector("#horse-player-select")) {
+    initHorseRacingPage();
+  }
 });
 
 function initHomePage() {
@@ -891,4 +895,181 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+const horseRacingState = {
+  participants: [],
+  selectedWinner: null,
+  roomCode: null,
+  roomData: null,
+};
+
+async function initHorseRacingPage() {
+  const playerSelect = document.querySelector("#horse-player-select");
+  const betInput = document.querySelector("#horse-bet-amount");
+  const addBtn = document.querySelector("#add-player-btn");
+  const clearBtn = document.querySelector("#clear-players-btn");
+  const playersList = document.querySelector("#horse-players-list");
+  const startBtn = document.querySelector("#start-subgame");
+  const finishBtn = document.querySelector("#finish-subgame");
+  const resultPhase = document.querySelector("#horse-result-phase");
+  const winnerSelection = document.querySelector("#horse-winner-selection");
+  const statusNode = document.querySelector("#game-status-text");
+  const summaryPlayers = document.querySelector("#game-selected-players");
+  const summaryLocked = document.querySelector("#game-selected-locked");
+  const summaryRate = document.querySelector("#game-selected-rate");
+  const summaryStatus = document.querySelector("#game-selected-status");
+  const roomCodeNode = document.querySelector("#game-room-code");
+  const roomStateNode = document.querySelector("#game-room-state");
+
+  if (hasPlaceholderConfig) {
+    setStatus(statusNode, "Firebase config missing.", true);
+    return;
+  }
+
+  const roomCode = await resolveCurrentRoom();
+  if (!roomCode) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  horseRacingState.roomCode = roomCode;
+
+  attachRoomWatcher(roomCode, (room) => {
+    horseRacingState.roomData = room;
+    roomCodeNode.textContent = roomCode;
+    setRoomBadge(
+      roomStateNode,
+      room.status === "ended" ? "Chiusa" : "Attiva",
+      room.status
+    );
+
+    populatePlayerSelectForStats(playerSelect, room.playersList);
+  }, statusNode);
+
+  addBtn.addEventListener("click", () => {
+    const playerName = playerSelect.value;
+    const betAmount = parseNumber(betInput.value);
+
+    if (!playerName) {
+      setStatus(statusNode, "Seleziona un giocatore", true);
+      return;
+    }
+
+    if (!betAmount || betAmount <= 0) {
+      setStatus(statusNode, "Inserisci un importo valido", true);
+      return;
+    }
+
+    if (horseRacingState.participants.find(p => p.name === playerName)) {
+      setStatus(statusNode, "Giocatore già aggiunto", true);
+      return;
+    }
+
+    horseRacingState.participants.push({ name: playerName, bet: betAmount });
+    playerSelect.value = "";
+    betInput.value = "";
+    renderHorsePlayersList();
+    updateHorseSummary();
+    setStatus(statusNode, "", false);
+  });
+
+  clearBtn.addEventListener("click", () => {
+    horseRacingState.participants = [];
+    renderHorsePlayersList();
+    updateHorseSummary();
+  });
+
+  startBtn.addEventListener("click", () => {
+    if (horseRacingState.participants.length < 2) {
+      setStatus(statusNode, "Servono almeno 2 giocatori", true);
+      return;
+    }
+
+    startBtn.disabled = true;
+    finishBtn.disabled = false;
+    summaryStatus.textContent = "In Corso";
+
+    resultPhase.hidden = false;
+    renderWinnerSelection();
+  });
+
+  finishBtn.addEventListener("click", async () => {
+    if (!horseRacingState.selectedWinner) {
+      setStatus(statusNode, "Seleziona un vincitore", true);
+      return;
+    }
+
+    finishBtn.disabled = true;
+
+    const participantCount = horseRacingState.participants.length;
+    const multiplier = 1 + (participantCount - 1) * 0.25;
+
+    const results = {};
+    horseRacingState.participants.forEach(p => {
+      if (p.name === horseRacingState.selectedWinner) {
+        const totalBet = horseRacingState.participants.reduce((sum, p2) => sum + p2.bet, 0);
+        const winAmount = (totalBet * multiplier) - p.bet;
+        results[p.name] = winAmount;
+      } else {
+        results[p.name] = -p.bet;
+      }
+    });
+
+    try {
+      await endSubGame(roomCode, "horse_racing", results);
+      setStatus(statusNode, "Partita terminata! Classifica aggiornata.", false);
+
+      horseRacingState.participants = [];
+      horseRacingState.selectedWinner = null;
+      renderHorsePlayersList();
+      updateHorseSummary();
+      resultPhase.hidden = true;
+      startBtn.disabled = false;
+      finishBtn.disabled = true;
+      summaryStatus.textContent = "Pronto";
+    } catch (error) {
+      setStatus(statusNode, error.message, true);
+      finishBtn.disabled = false;
+    }
+  });
+
+  function renderHorsePlayersList() {
+    playersList.innerHTML = horseRacingState.participants
+      .map((p, index) => `
+        <div class="horse-player-entry">
+          <span class="player-name">${escapeHtml(p.name)}</span>
+          <span class="bet-amount">${currencyFormatter.format(p.bet)}</span>
+        </div>
+      `)
+      .join("");
+  }
+
+  function updateHorseSummary() {
+    const totalBet = horseRacingState.participants.reduce((sum, p) => sum + p.bet, 0);
+    const count = horseRacingState.participants.length;
+    const multiplier = count >= 2 ? (1 + (count - 1) * 0.25).toFixed(2) + "x" : "-";
+
+    summaryPlayers.textContent = count;
+    summaryLocked.textContent = currencyFormatter.format(totalBet);
+    summaryRate.textContent = multiplier;
+  }
+
+  function renderWinnerSelection() {
+    winnerSelection.innerHTML = horseRacingState.participants
+      .map(p => `
+        <label class="winner-option ${horseRacingState.selectedWinner === p.name ? 'selected' : ''}">
+          <input type="radio" name="winner" value="${escapeHtml(p.name)}">
+          <span>${escapeHtml(p.name)}</span>
+        </label>
+      `)
+      .join("");
+
+    winnerSelection.querySelectorAll("input").forEach(input => {
+      input.addEventListener("change", (e) => {
+        horseRacingState.selectedWinner = e.target.value;
+        renderWinnerSelection();
+      });
+    });
+  }
 }
