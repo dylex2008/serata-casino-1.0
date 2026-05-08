@@ -82,6 +82,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if (document.querySelector("#roulette-player-select")) {
     initRoulettePage();
   }
+
+  if (document.querySelector("#poker-player-select")) {
+    initPokerPage();
+  }
+
+  if (document.querySelector("#blackjack-player-select")) {
+    initBlackjackPage();
+  }
 });
 
 function initHomePage() {
@@ -1187,5 +1195,373 @@ async function initRoulettePage() {
     summaryLocked.textContent = currencyFormatter.format(totalPot);
     summaryRate.textContent = winner ? "Vince tutto" : "-";
     summaryStatus.textContent = count > 0 ? (winner ? "Pronto" : "In attesa") : "Pronto";
+  }
+}
+
+const pokerState = {
+  participants: [],
+  gameStarted: false,
+  roomCode: null,
+  roomData: null,
+};
+
+async function initPokerPage() {
+  const playerSelect = document.querySelector("#poker-player-select");
+  const betInput = document.querySelector("#poker-bet-amount");
+  const addBtn = document.querySelector("#add-player-btn");
+  const startBtn = document.querySelector("#start-subgame");
+  const finishBtn = document.querySelector("#finish-subgame");
+  const playersList = document.querySelector("#poker-players-list");
+  const resultPhase = document.querySelector("#poker-result-phase");
+  const resultList = document.querySelector("#poker-result-list");
+  const statusNode = document.querySelector("#game-status-text");
+  const summaryPlayers = document.querySelector("#game-selected-players");
+  const summaryLocked = document.querySelector("#game-selected-locked");
+  const summaryRate = document.querySelector("#game-selected-rate");
+  const summaryStatus = document.querySelector("#game-selected-status");
+  const roomCodeNode = document.querySelector("#game-room-code");
+  const roomStateNode = document.querySelector("#game-room-state");
+
+  if (hasPlaceholderConfig) {
+    setStatus(statusNode, "Firebase config missing.", true);
+    return;
+  }
+
+  const roomCode = await resolveCurrentRoom();
+  if (!roomCode) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  pokerState.roomCode = roomCode;
+
+  attachRoomWatcher(roomCode, (room) => {
+    pokerState.roomData = room;
+    roomCodeNode.textContent = roomCode;
+    setRoomBadge(
+      roomStateNode,
+      room.status === "ended" ? "Chiusa" : "Attiva",
+      room.status
+    );
+
+    populatePlayerSelectForStats(playerSelect, room.playersList);
+  }, statusNode);
+
+  addBtn.addEventListener("click", () => {
+    if (pokerState.gameStarted) {
+      setStatus(statusNode, "Gioco già iniziato", true);
+      return;
+    }
+
+    const playerName = playerSelect.value;
+    const betAmount = parseNumber(betInput.value);
+
+    if (!playerName) {
+      setStatus(statusNode, "Seleziona un giocatore", true);
+      return;
+    }
+
+    if (!betAmount || betAmount <= 0) {
+      setStatus(statusNode, "Inserisci un importo valido", true);
+      return;
+    }
+
+    if (pokerState.participants.find(p => p.name === playerName)) {
+      setStatus(statusNode, "Giocatore già aggiunto", true);
+      return;
+    }
+
+    pokerState.participants.push({ name: playerName, bet: betAmount, result: null });
+    playerSelect.value = "";
+    betInput.value = "";
+    renderPokerPlayersList();
+    updatePokerSummary();
+    setStatus(statusNode, "", false);
+  });
+
+  startBtn.addEventListener("click", () => {
+    if (pokerState.participants.length < 2) {
+      setStatus(statusNode, "Servono almeno 2 giocatori", true);
+      return;
+    }
+
+    pokerState.gameStarted = true;
+    startBtn.disabled = true;
+    finishBtn.disabled = false;
+    summaryStatus.textContent = "In corso";
+    resultPhase.hidden = false;
+    renderPokerResultList();
+    setStatus(statusNode, "Seleziona i vincitori", false);
+  });
+
+  finishBtn.addEventListener("click", async () => {
+    const winners = pokerState.participants.filter(p => p.result === "win");
+    const losers = pokerState.participants.filter(p => p.result === "lose");
+
+    if (winners.length === 0) {
+      setStatus(statusNode, "Seleziona almeno un vincitore", true);
+      return;
+    }
+
+    if (losers.length === 0) {
+      setStatus(statusNode, "Seleziona almeno un perdente", true);
+      return;
+    }
+
+    const totalPot = pokerState.participants.reduce((sum, p) => sum + p.bet, 0);
+    const winPerWinner = totalPot / winners.length;
+    const results = {};
+
+    pokerState.participants.forEach(p => {
+      if (p.result === "win") {
+        results[p.name] = winPerWinner - p.bet;
+      } else {
+        results[p.name] = -p.bet;
+      }
+    });
+
+    try {
+      await endSubGame(roomCode, "poker", results);
+      setStatus(statusNode, `Partita terminata! ${winners.length} vincitore/i guadagna/no ${currencyFormatter.format(winPerWinner)}`, false);
+
+      pokerState.participants = [];
+      pokerState.gameStarted = false;
+      startBtn.disabled = false;
+      finishBtn.disabled = true;
+      resultPhase.hidden = true;
+      renderPokerPlayersList();
+      updatePokerSummary();
+      summaryStatus.textContent = "Pronto";
+    } catch (error) {
+      setStatus(statusNode, error.message, true);
+    }
+  });
+
+  function renderPokerPlayersList() {
+    playersList.innerHTML = pokerState.participants
+      .map((p) => `
+        <div class="poker-player-entry">
+          <span class="player-name">${escapeHtml(p.name)}</span>
+          <span class="bet-amount">${currencyFormatter.format(p.bet)}</span>
+        </div>
+      `)
+      .join("");
+  }
+
+  function renderPokerResultList() {
+    resultList.innerHTML = pokerState.participants
+      .map((p, index) => `
+        <div class="poker-result-entry ${p.result === "win" ? "winner" : p.result === "lose" ? "loser" : ""}" data-index="${index}">
+          <span class="player-name">${escapeHtml(p.name)}</span>
+          <span class="bet-amount">${currencyFormatter.format(p.bet)}</span>
+          <div class="result-buttons">
+            <button type="button" class="result-btn win-btn ${p.result === "win" ? "active" : ""}" data-result="win">Vince</button>
+            <button type="button" class="result-btn lose-btn ${p.result === "lose" ? "active" : ""}" data-result="lose">Perde</button>
+          </div>
+        </div>
+      `)
+      .join("");
+
+    resultList.querySelectorAll(".result-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const index = parseInt(e.target.closest(".poker-result-entry").dataset.index);
+        const result = e.target.dataset.result;
+        pokerState.participants[index].result = result;
+        renderPokerResultList();
+      });
+    });
+  }
+
+  function updatePokerSummary() {
+    const totalBet = pokerState.participants.reduce((sum, p) => sum + p.bet, 0);
+    const count = pokerState.participants.length;
+
+    summaryPlayers.textContent = count;
+    summaryLocked.textContent = currencyFormatter.format(totalBet);
+    summaryRate.textContent = pokerState.gameStarted ? "In corso" : "-";
+  }
+}
+
+const blackjackState = {
+  participants: [],
+  gameStarted: false,
+  roomCode: null,
+  roomData: null,
+};
+
+async function initBlackjackPage() {
+  const playerSelect = document.querySelector("#blackjack-player-select");
+  const betInput = document.querySelector("#blackjack-bet-amount");
+  const addBtn = document.querySelector("#add-player-btn");
+  const startBtn = document.querySelector("#start-subgame");
+  const finishBtn = document.querySelector("#finish-subgame");
+  const playersList = document.querySelector("#blackjack-players-list");
+  const resultPhase = document.querySelector("#blackjack-result-phase");
+  const resultList = document.querySelector("#blackjack-result-list");
+  const statusNode = document.querySelector("#game-status-text");
+  const summaryPlayers = document.querySelector("#game-selected-players");
+  const summaryLocked = document.querySelector("#game-selected-locked");
+  const summaryRate = document.querySelector("#game-selected-rate");
+  const summaryStatus = document.querySelector("#game-selected-status");
+  const roomCodeNode = document.querySelector("#game-room-code");
+  const roomStateNode = document.querySelector("#game-room-state");
+
+  if (hasPlaceholderConfig) {
+    setStatus(statusNode, "Firebase config missing.", true);
+    return;
+  }
+
+  const roomCode = await resolveCurrentRoom();
+  if (!roomCode) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  blackjackState.roomCode = roomCode;
+
+  attachRoomWatcher(roomCode, (room) => {
+    blackjackState.roomData = room;
+    roomCodeNode.textContent = roomCode;
+    setRoomBadge(
+      roomStateNode,
+      room.status === "ended" ? "Chiusa" : "Attiva",
+      room.status
+    );
+
+    populatePlayerSelectForStats(playerSelect, room.playersList);
+  }, statusNode);
+
+  addBtn.addEventListener("click", () => {
+    if (blackjackState.gameStarted) {
+      setStatus(statusNode, "Gioco già iniziato", true);
+      return;
+    }
+
+    const playerName = playerSelect.value;
+    const betAmount = parseNumber(betInput.value);
+
+    if (!playerName) {
+      setStatus(statusNode, "Seleziona un giocatore", true);
+      return;
+    }
+
+    if (!betAmount || betAmount <= 0) {
+      setStatus(statusNode, "Inserisci un importo valido", true);
+      return;
+    }
+
+    if (blackjackState.participants.find(p => p.name === playerName)) {
+      setStatus(statusNode, "Giocatore già aggiunto", true);
+      return;
+    }
+
+    blackjackState.participants.push({ name: playerName, bet: betAmount, result: null });
+    playerSelect.value = "";
+    betInput.value = "";
+    renderBlackjackPlayersList();
+    updateBlackjackSummary();
+    setStatus(statusNode, "", false);
+  });
+
+  startBtn.addEventListener("click", () => {
+    if (blackjackState.participants.length < 2) {
+      setStatus(statusNode, "Servono almeno 2 giocatori", true);
+      return;
+    }
+
+    blackjackState.gameStarted = true;
+    startBtn.disabled = true;
+    finishBtn.disabled = false;
+    summaryStatus.textContent = "In corso";
+    resultPhase.hidden = false;
+    renderBlackjackResultList();
+    setStatus(statusNode, "Seleziona i vincitori", false);
+  });
+
+  finishBtn.addEventListener("click", async () => {
+    const winners = blackjackState.participants.filter(p => p.result === "win");
+    const losers = blackjackState.participants.filter(p => p.result === "lose");
+
+    if (winners.length === 0) {
+      setStatus(statusNode, "Seleziona almeno un vincitore", true);
+      return;
+    }
+
+    if (losers.length === 0) {
+      setStatus(statusNode, "Seleziona almeno un perdente", true);
+      return;
+    }
+
+    const totalPot = blackjackState.participants.reduce((sum, p) => sum + p.bet, 0);
+    const winPerWinner = totalPot / winners.length;
+    const results = {};
+
+    blackjackState.participants.forEach(p => {
+      if (p.result === "win") {
+        results[p.name] = winPerWinner - p.bet;
+      } else {
+        results[p.name] = -p.bet;
+      }
+    });
+
+    try {
+      await endSubGame(roomCode, "blackjack", results);
+      setStatus(statusNode, `Partita terminata! ${winners.length} vincitore/i guadagna/no ${currencyFormatter.format(winPerWinner)}`, false);
+
+      blackjackState.participants = [];
+      blackjackState.gameStarted = false;
+      startBtn.disabled = false;
+      finishBtn.disabled = true;
+      resultPhase.hidden = true;
+      renderBlackjackPlayersList();
+      updateBlackjackSummary();
+      summaryStatus.textContent = "Pronto";
+    } catch (error) {
+      setStatus(statusNode, error.message, true);
+    }
+  });
+
+  function renderBlackjackPlayersList() {
+    playersList.innerHTML = blackjackState.participants
+      .map((p) => `
+        <div class="blackjack-player-entry">
+          <span class="player-name">${escapeHtml(p.name)}</span>
+          <span class="bet-amount">${currencyFormatter.format(p.bet)}</span>
+        </div>
+      `)
+      .join("");
+  }
+
+  function renderBlackjackResultList() {
+    resultList.innerHTML = blackjackState.participants
+      .map((p, index) => `
+        <div class="blackjack-result-entry ${p.result === "win" ? "winner" : p.result === "lose" ? "loser" : ""}" data-index="${index}">
+          <span class="player-name">${escapeHtml(p.name)}</span>
+          <span class="bet-amount">${currencyFormatter.format(p.bet)}</span>
+          <div class="result-buttons">
+            <button type="button" class="result-btn win-btn ${p.result === "win" ? "active" : ""}" data-result="win">Vince</button>
+            <button type="button" class="result-btn lose-btn ${p.result === "lose" ? "active" : ""}" data-result="lose">Perde</button>
+          </div>
+        </div>
+      `)
+      .join("");
+
+    resultList.querySelectorAll(".result-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const index = parseInt(e.target.closest(".blackjack-result-entry").dataset.index);
+        const result = e.target.dataset.result;
+        blackjackState.participants[index].result = result;
+        renderBlackjackResultList();
+      });
+    });
+  }
+
+  function updateBlackjackSummary() {
+    const totalBet = blackjackState.participants.reduce((sum, p) => sum + p.bet, 0);
+    const count = blackjackState.participants.length;
+
+    summaryPlayers.textContent = count;
+    summaryLocked.textContent = currencyFormatter.format(totalBet);
+    summaryRate.textContent = blackjackState.gameStarted ? "In corso" : "-";
   }
 }
