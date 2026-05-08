@@ -592,6 +592,94 @@ export async function adjustPlayerBalance(roomCode, playerName, deltaEuro) {
   });
 }
 
+export async function applyDirectGameResults(roomCode, gameKey, results) {
+  const normalizedRoomCode = normalizeRoomCode(roomCode);
+  assertGameKey(gameKey);
+
+  if (!normalizedRoomCode) {
+    throw new Error("Stanza non valida.");
+  }
+
+  const normalizedResults = Object.entries(results || {}).reduce((accumulator, [playerName, value]) => {
+    const normalizedPlayerName = String(playerName || "").trim();
+    const parsedValue = Number(value);
+
+    if (normalizedPlayerName && Number.isFinite(parsedValue) && parsedValue !== 0) {
+      accumulator[normalizedPlayerName] = parsedValue;
+    }
+
+    return accumulator;
+  }, {});
+
+  if (!Object.keys(normalizedResults).length) {
+    throw new Error("Inserisci almeno un risultato valido.");
+  }
+
+  const room = await getRoom(normalizedRoomCode);
+  if (!room) {
+    throw new Error("La stanza selezionata non esiste.");
+  }
+
+  if (room.status === "ended") {
+    throw new Error("La stanza e' terminata.");
+  }
+
+  const database = ensureDatabase();
+  const updates = {};
+  const settlement = {
+    endedAt: Date.now(),
+    chipsPerEuro: 1,
+    participants: {},
+  };
+  const gameResults = {};
+
+  Object.entries(normalizedResults).forEach(([playerName, deltaEuro]) => {
+    const ledger = room.players[playerName];
+
+    if (!ledger) {
+      throw new Error(`Il giocatore ${playerName} non appartiene a questa stanza.`);
+    }
+
+    const nextTotal = ledger.total + deltaEuro;
+    if (nextTotal < ledger.locked) {
+      throw new Error(`Operazione non valida per ${playerName}: totale sotto ai soldi gia in gioco.`);
+    }
+
+    const nextGames = {
+      ...ledger.games,
+      [gameKey]: Number(ledger.games?.[gameKey] || 0) + deltaEuro,
+    };
+
+    updates[`rooms/${normalizedRoomCode}/players/${playerName}`] = {
+      total: nextTotal,
+      locked: ledger.locked,
+      available: nextTotal - ledger.locked,
+      games: nextGames,
+      activeGame: ledger.activeGame || null,
+    };
+
+    settlement.participants[playerName] = {
+      investedEuro: 0,
+      finalNetEuro: deltaEuro,
+      finalChips: 0,
+    };
+    gameResults[playerName] = deltaEuro;
+  });
+
+  const previousGame = room.games?.[gameKey] || {};
+  updates[`rooms/${normalizedRoomCode}/games/${gameKey}`] = {
+    status: "idle",
+    chipsPerEuro: Number(previousGame.chipsPerEuro || DEFAULT_CHIPS_PER_EURO),
+    updatedAt: Date.now(),
+    lastSettlement: settlement,
+    lastResults: gameResults,
+    useChips: CHIP_GAMES.has(gameKey),
+    session: null,
+  };
+
+  await update(ref(database), updates);
+}
+
 export function subscribeToCurrentRoom(callback, errorCallback) {
   const database = ensureDatabase();
   return onValue(
