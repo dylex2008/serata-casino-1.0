@@ -455,6 +455,54 @@ textarea:focus {
   margin-top: 16px;
 }
 
+.horse-result-select {
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 1rem;
+  border: 2px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--panel);
+  min-width: 140px;
+}
+
+.roulette-player-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.roulette-player-select,
+.roulette-bet-input,
+.roulette-result-select {
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 1rem;
+  border: 2px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+.roulette-player-select {
+  flex: 1;
+  min-width: 200px;
+}
+
+.roulette-bet-input {
+  width: 150px;
+}
+
+.roulette-result-select {
+  min-width: 140px;
+}
+
+.roulette-players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
 .horse-player-entry {
   display: flex;
   justify-content: space-between;
@@ -490,6 +538,66 @@ textarea:focus {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.roulette-player-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f5f5f5;
+  border-radius: 10px;
+}
+
+.roulette-player-entry .player-name {
+  font-weight: 600;
+}
+
+.roulette-player-entry .bet-amount {
+  color: var(--hero-pink);
+  font-weight: 700;
+}
+
+.roulette-player-entry.winner {
+  background: #d4edda;
+  border: 2px solid #28a745;
+}
+
+.roulette-player-entry.loser {
+  background: #f8d7da;
+  border: 2px solid #dc3545;
+}
+
+.horse-player-entry.winner {
+  background: #d4edda;
+  border: 2px solid #28a745;
+}
+
+.horse-player-entry.loser {
+  background: #f8d7da;
+  border: 2px solid #dc3545;
+}
+
+.horse-player-entry .player-result,
+.roulette-player-entry .player-result {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.horse-player-entry.winner .player-result {
+  color: #28a745;
+}
+
+.horse-player-entry.loser .player-result {
+  color: #dc3545;
+}
+
+.roulette-player-entry.winner .player-result {
+  color: #28a745;
+}
+
+.roulette-player-entry.loser .player-result {
+  color: #dc3545;
 }
 
 .winner-option {
