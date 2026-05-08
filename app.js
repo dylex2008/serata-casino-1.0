@@ -78,6 +78,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (document.querySelector("#horse-player-select")) {
     initHorseRacingPage();
   }
+
+  if (document.querySelector("#roulette-player-select")) {
+    initRoulettePage();
+  }
 });
 
 function initHomePage() {
@@ -899,7 +903,6 @@ function escapeHtml(value) {
 
 const horseRacingState = {
   participants: [],
-  selectedWinner: null,
   roomCode: null,
   roomData: null,
 };
@@ -907,13 +910,10 @@ const horseRacingState = {
 async function initHorseRacingPage() {
   const playerSelect = document.querySelector("#horse-player-select");
   const betInput = document.querySelector("#horse-bet-amount");
+  const resultSelect = document.querySelector("#horse-result-select");
   const addBtn = document.querySelector("#add-player-btn");
-  const clearBtn = document.querySelector("#clear-players-btn");
-  const playersList = document.querySelector("#horse-players-list");
-  const startBtn = document.querySelector("#start-subgame");
   const finishBtn = document.querySelector("#finish-subgame");
-  const resultPhase = document.querySelector("#horse-result-phase");
-  const winnerSelection = document.querySelector("#horse-winner-selection");
+  const playersList = document.querySelector("#horse-players-list");
   const statusNode = document.querySelector("#game-status-text");
   const summaryPlayers = document.querySelector("#game-selected-players");
   const summaryLocked = document.querySelector("#game-selected-locked");
@@ -950,6 +950,7 @@ async function initHorseRacingPage() {
   addBtn.addEventListener("click", () => {
     const playerName = playerSelect.value;
     const betAmount = parseNumber(betInput.value);
+    const result = resultSelect.value;
 
     if (!playerName) {
       setStatus(statusNode, "Seleziona un giocatore", true);
@@ -961,56 +962,49 @@ async function initHorseRacingPage() {
       return;
     }
 
+    if (!result) {
+      setStatus(statusNode, "Seleziona il risultato", true);
+      return;
+    }
+
     if (horseRacingState.participants.find(p => p.name === playerName)) {
       setStatus(statusNode, "Giocatore già aggiunto", true);
       return;
     }
 
-    horseRacingState.participants.push({ name: playerName, bet: betAmount });
+    const winnerCount = horseRacingState.participants.filter(p => p.result === "win").length;
+    if (result === "win" && winnerCount >= 1) {
+      setStatus(statusNode, "Può esserci un solo vincitore", true);
+      return;
+    }
+
+    horseRacingState.participants.push({ name: playerName, bet: betAmount, result: result });
     playerSelect.value = "";
     betInput.value = "";
+    resultSelect.value = "";
     renderHorsePlayersList();
     updateHorseSummary();
     setStatus(statusNode, "", false);
   });
 
-  clearBtn.addEventListener("click", () => {
-    horseRacingState.participants = [];
-    renderHorsePlayersList();
-    updateHorseSummary();
-  });
-
-  startBtn.addEventListener("click", () => {
-    if (horseRacingState.participants.length < 2) {
-      setStatus(statusNode, "Servono almeno 2 giocatori", true);
+  finishBtn.addEventListener("click", async () => {
+    if (horseRacingState.participants.length === 0) {
+      setStatus(statusNode, "Nessun giocatore aggiunto", true);
       return;
     }
 
-    startBtn.disabled = true;
-    finishBtn.disabled = false;
-    summaryStatus.textContent = "In Corso";
-
-    document.querySelector("#horse-winner-section").hidden = false;
-    renderWinnerSelection();
-  });
-
-  finishBtn.addEventListener("click", async () => {
-    if (!horseRacingState.selectedWinner) {
+    const winner = horseRacingState.participants.find(p => p.result === "win");
+    if (!winner) {
       setStatus(statusNode, "Seleziona un vincitore", true);
       return;
     }
 
-    finishBtn.disabled = true;
-
-    const participantCount = horseRacingState.participants.length;
-    const multiplier = 1 + (participantCount - 1) * 0.25;
-    const winnerBet = horseRacingState.participants.find(p => p.name === horseRacingState.selectedWinner).bet;
-    const winAmount = winnerBet * multiplier;
-
+    const totalPot = horseRacingState.participants.reduce((sum, p) => sum + p.bet, 0);
     const results = {};
+
     horseRacingState.participants.forEach(p => {
-      if (p.name === horseRacingState.selectedWinner) {
-        results[p.name] = winAmount - p.bet;
+      if (p.result === "win") {
+        results[p.name] = totalPot - p.bet;
       } else {
         results[p.name] = -p.bet;
       }
@@ -1018,58 +1012,180 @@ async function initHorseRacingPage() {
 
     try {
       await endSubGame(roomCode, "horse_racing", results);
-      setStatus(statusNode, `Partita terminata! ${escapeHtml(horseRacingState.selectedWinner)} vince ${currencyFormatter.format(winAmount)}`, false);
+      setStatus(statusNode, `Partita terminata! ${escapeHtml(winner.name)} vince ${currencyFormatter.format(totalPot)}`, false);
 
       horseRacingState.participants = [];
-      horseRacingState.selectedWinner = null;
       renderHorsePlayersList();
       updateHorseSummary();
-      document.querySelector("#horse-winner-section").hidden = true;
-      startBtn.disabled = false;
-      finishBtn.disabled = true;
-      summaryStatus.textContent = "Pronto";
     } catch (error) {
       setStatus(statusNode, error.message, true);
-      finishBtn.disabled = false;
     }
   });
-
-  function renderHorsePlayersList() {
+    function renderHorsePlayersList() {
     playersList.innerHTML = horseRacingState.participants
-      .map((p, index) => `
-        <div class="horse-player-entry">
+      .map((p) => `
+        <div class="horse-player-entry ${p.result === "win" ? "winner" : "loser"}">
           <span class="player-name">${escapeHtml(p.name)}</span>
           <span class="bet-amount">${currencyFormatter.format(p.bet)}</span>
+          <span class="player-result">${p.result === "win" ? "✓ Vince" : "✗ Perde"}</span>
         </div>
       `)
       .join("");
   }
 
   function updateHorseSummary() {
-    const totalBet = horseRacingState.participants.reduce((sum, p) => sum + p.bet, 0);
+    const totalPot = horseRacingState.participants.reduce((sum, p) => sum + p.bet, 0);
     const count = horseRacingState.participants.length;
-    const multiplier = count >= 2 ? (1 + (count - 1) * 0.25).toFixed(2) + "x" : "-";
+    const winner = horseRacingState.participants.find(p => p.result === "win");
 
     summaryPlayers.textContent = count;
-    summaryLocked.textContent = currencyFormatter.format(totalBet);
-    summaryRate.textContent = multiplier;
+    summaryLocked.textContent = currencyFormatter.format(totalPot);
+    summaryRate.textContent = winner ? "Vince tutto" : "-";
+    summaryStatus.textContent = count > 0 ? (winner ? "Pronto" : "In attesa") : "Pronto";
+  }
+}
+
+const rouletteState = {
+  participants: [],
+  roomCode: null,
+  roomData: null,
+};
+
+async function initRoulettePage() {
+  const playerSelect = document.querySelector("#roulette-player-select");
+  const betInput = document.querySelector("#roulette-bet-amount");
+  const resultSelect = document.querySelector("#roulette-result-select");
+  const addBtn = document.querySelector("#add-player-btn");
+  const finishBtn = document.querySelector("#finish-subgame");
+  const playersList = document.querySelector("#roulette-players-list");
+  const statusNode = document.querySelector("#game-status-text");
+  const summaryPlayers = document.querySelector("#game-selected-players");
+  const summaryLocked = document.querySelector("#game-selected-locked");
+  const summaryRate = document.querySelector("#game-selected-rate");
+  const summaryStatus = document.querySelector("#game-selected-status");
+  const roomCodeNode = document.querySelector("#game-room-code");
+  const roomStateNode = document.querySelector("#game-room-state");
+
+  if (hasPlaceholderConfig) {
+    setStatus(statusNode, "Firebase config missing.", true);
+    return;
   }
 
-  function renderWinnerSelection() {
-    winnerSelection.innerHTML = horseRacingState.participants
-      .map(p => `
-        <label class="winner-option ${horseRacingState.selectedWinner === p.name ? 'selected' : ''}">
-          <input type="radio" name="winner" value="${escapeHtml(p.name)}">
-          <span>${escapeHtml(p.name)}</span>
-        </label>
+  const roomCode = await resolveCurrentRoom();
+  if (!roomCode) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  rouletteState.roomCode = roomCode;
+
+  attachRoomWatcher(roomCode, (room) => {
+    rouletteState.roomData = room;
+    roomCodeNode.textContent = roomCode;
+    setRoomBadge(
+      roomStateNode,
+      room.status === "ended" ? "Chiusa" : "Attiva",
+      room.status
+    );
+
+    populatePlayerSelectForStats(playerSelect, room.playersList);
+  }, statusNode);
+
+  addBtn.addEventListener("click", () => {
+    const playerName = playerSelect.value;
+    const betAmount = parseNumber(betInput.value);
+    const result = resultSelect.value;
+
+    if (!playerName) {
+      setStatus(statusNode, "Seleziona un giocatore", true);
+      return;
+    }
+
+    if (!betAmount || betAmount <= 0) {
+      setStatus(statusNode, "Inserisci un importo valido", true);
+      return;
+    }
+
+    if (!result) {
+      setStatus(statusNode, "Seleziona il risultato", true);
+      return;
+    }
+
+    if (rouletteState.participants.find(p => p.name === playerName)) {
+      setStatus(statusNode, "Giocatore già aggiunto", true);
+      return;
+    }
+
+    const winnerCount = rouletteState.participants.filter(p => p.result === "win").length;
+    if (result === "win" && winnerCount >= 1) {
+      setStatus(statusNode, "Può esserci un solo vincitore", true);
+      return;
+    }
+
+    rouletteState.participants.push({ name: playerName, bet: betAmount, result: result });
+    playerSelect.value = "";
+    betInput.value = "";
+    resultSelect.value = "";
+    renderRoulettePlayersList();
+    updateRouletteSummary();
+    setStatus(statusNode, "", false);
+  });
+
+  finishBtn.addEventListener("click", async () => {
+    if (rouletteState.participants.length === 0) {
+      setStatus(statusNode, "Nessun giocatore aggiunto", true);
+      return;
+    }
+
+    const winner = rouletteState.participants.find(p => p.result === "win");
+    if (!winner) {
+      setStatus(statusNode, "Seleziona un vincitore", true);
+      return;
+    }
+
+    const totalPot = rouletteState.participants.reduce((sum, p) => sum + p.bet, 0);
+    const results = {};
+
+    rouletteState.participants.forEach(p => {
+      if (p.result === "win") {
+        results[p.name] = totalPot - p.bet;
+      } else {
+        results[p.name] = -p.bet;
+      }
+    });
+
+    try {
+      await endSubGame(roomCode, "roulette", results);
+      setStatus(statusNode, `Partita terminata! ${escapeHtml(winner.name)} vince ${currencyFormatter.format(totalPot)}`, false);
+
+      rouletteState.participants = [];
+      renderRoulettePlayersList();
+      updateRouletteSummary();
+    } catch (error) {
+      setStatus(statusNode, error.message, true);
+    }
+  });
+
+  function renderRoulettePlayersList() {
+    playersList.innerHTML = rouletteState.participants
+      .map((p) => `
+        <div class="roulette-player-entry ${p.result === "win" ? "winner" : "loser"}">
+          <span class="player-name">${escapeHtml(p.name)}</span>
+          <span class="bet-amount">${currencyFormatter.format(p.bet)}</span>
+          <span class="player-result">${p.result === "win" ? "✓ Vince" : "✗ Perde"}</span>
+        </div>
       `)
       .join("");
+  }
 
-    winnerSelection.querySelectorAll("input").forEach(input => {
-      input.addEventListener("change", (e) => {
-        horseRacingState.selectedWinner = e.target.value;
-        renderWinnerSelection();
-      });
-    });
+  function updateRouletteSummary() {
+    const totalPot = rouletteState.participants.reduce((sum, p) => sum + p.bet, 0);
+    const count = rouletteState.participants.length;
+    const winner = rouletteState.participants.find(p => p.result === "win");
+
+    summaryPlayers.textContent = count;
+    summaryLocked.textContent = currencyFormatter.format(totalPot);
+    summaryRate.textContent = winner ? "Vince tutto" : "-";
+    summaryStatus.textContent = count > 0 ? (winner ? "Pronto" : "In attesa") : "Pronto";
   }
 }
