@@ -1139,6 +1139,7 @@ textarea:focus {
   gap: 8px;
   background: var(--panel);
   box-shadow: none;
+  min-height: 320px;
 }
 
 .mini-mockup-peach {
@@ -1266,6 +1267,169 @@ textarea:focus {
   padding: 20px 0;
 }
 
+.mini-game-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mini-game-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.mini-game-phase-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mini-game-entry-row,
+.mini-game-result-row,
+.mini-game-player-row {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+}
+
+.mini-game-entry-row {
+  grid-template-columns: minmax(0, 1fr) 110px auto;
+}
+
+.mini-game-result-row {
+  grid-template-columns: minmax(0, 1fr) 112px;
+}
+
+.mini-game-player-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.mini-game-entry-row select,
+.mini-game-entry-row input,
+.mini-game-result-row input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.95);
+  font-size: 0.92rem;
+}
+
+.mini-game-players-list,
+.mini-game-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mini-game-player-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mini-game-player-meta span {
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mini-game-player-meta small {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.mini-game-add-btn,
+.mini-game-remove-btn,
+.mini-game-action {
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mini-game-add-btn,
+.mini-game-remove-btn {
+  border-radius: 999px;
+  padding: 9px 12px;
+  font-weight: 700;
+}
+
+.mini-game-remove-btn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.mini-game-action {
+  width: 100%;
+  border-radius: 999px;
+  padding: 11px 14px;
+  font-weight: 700;
+}
+
+.mini-game-add-btn:hover,
+.mini-game-remove-btn:hover,
+.mini-game-action:hover {
+  transform: translateY(-1px);
+}
+
+.mini-game-add-btn:disabled,
+.mini-game-remove-btn:disabled,
+.mini-game-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.mini-game-inline-status {
+  min-height: 1rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.mini-game-inline-status-error {
+  color: #8f1e1e;
+}
+
+.mini-game-inline-status-ok {
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.mini-game-ranking-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: auto;
+}
+
+.mini-empty-compact {
+  padding: 8px 0;
+  font-size: 0.78rem;
+}
+
 .qr-section {
   display: flex;
   flex-direction: row;
@@ -1335,7 +1499,8 @@ textarea:focus {
   .games-selection-grid,
   .entry-summary,
   .player-cards-grid,
-  .grid-four {
+  .grid-four,
+  .mini-mockup-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1360,6 +1525,11 @@ textarea:focus {
   .ranking-row {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .mini-game-entry-row,
+  .mini-game-result-row {
+    grid-template-columns: 1fr;
   }
 }
 
