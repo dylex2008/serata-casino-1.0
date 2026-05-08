@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Poker</title>
+    <title>Blackjack</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -12,7 +12,7 @@
     />
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body data-game-page="poker_simple">
+  <body data-game-page="blackjack_simple">
     <main class="shell shell-wide">
       <header class="minimal-header">
         <a class="button-secondary" href="input.html">Games</a>
@@ -25,7 +25,7 @@
 
       <section class="panel entry-panel">
         <div class="entry-topbar">
-          <h1>Poker</h1>
+          <h1>Blackjack</h1>
           <div class="entry-actions">
             <button id="start-subgame" class="button-primary" type="button">Inizia Gioco</button>
             <button id="finish-subgame" class="button-primary" type="button" disabled>Termina Partita</button>
@@ -39,22 +39,22 @@
           <div class="summary-box"><span>Stato</span><strong id="game-selected-status">Pronto</strong></div>
         </div>
 
-        <div id="poker-selection-phase">
-          <div class="poker-setup-section">
-            <div class="poker-player-row">
-              <select id="poker-player-select" class="poker-player-select">
+        <div id="blackjack-selection-phase">
+          <div class="blackjack-setup-section">
+            <div class="blackjack-player-row">
+              <select id="blackjack-player-select" class="blackjack-player-select">
                 <option value="">Seleziona giocatore</option>
               </select>
-              <input type="number" id="poker-bet-amount" class="poker-bet-input" placeholder="Punta €" step="0.01" min="0">
+              <input type="number" id="blackjack-bet-amount" class="blackjack-bet-input" placeholder="Punta €" step="0.01" min="0">
               <button type="button" id="add-player-btn" class="button-secondary">Aggiungi</button>
             </div>
-            <div id="poker-players-list" class="poker-players-list"></div>
+            <div id="blackjack-players-list" class="blackjack-players-list"></div>
           </div>
         </div>
 
-        <div id="poker-result-phase" class="poker-result-phase" hidden>
+        <div id="blackjack-result-phase" class="blackjack-result-phase" hidden>
           <h3>Risultati Partita</h3>
-          <div id="poker-result-list" class="poker-result-list"></div>
+          <div id="blackjack-result-list" class="blackjack-result-list"></div>
         </div>
 
         <p id="game-status-text" class="status-text" aria-live="polite"></p>
