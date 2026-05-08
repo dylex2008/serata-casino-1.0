@@ -177,9 +177,9 @@ function hydrateRoomData(room) {
 function buildPlayersSeed(playersList) {
   return playersList.reduce((accumulator, playerName) => {
     accumulator[playerName] = {
-      total: 0,
+      total: 100,
       locked: 0,
-      available: 0,
+      available: 100,
       games: buildGameTotalsSeed(),
       activeGame: null,
     };
