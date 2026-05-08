@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Poker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body data-game-page="poker_simple">
+    <main class="shell shell-wide">
+      <header class="minimal-header">
+        <a class="button-secondary" href="input.html">Games</a>
+        <div class="room-inline">
+          <strong id="game-room-code" class="room-code-inline">...</strong>
+          <strong id="game-room-state" class="state-badge" data-state="idle">...</strong>
+        </div>
+        <a class="button-secondary" href="leaderboard.html">Rankings</a>
+      </header>
+
+      <section class="panel entry-panel">
+        <div class="entry-topbar">
+          <h1>Poker</h1>
+          <div class="entry-actions">
+            <button id="start-subgame" class="button-primary" type="button">Inizia Gioco</button>
+            <button id="finish-subgame" class="button-primary" type="button" disabled>Termina Partita</button>
+          </div>
+        </div>
+
+        <div class="entry-summary">
+          <div class="summary-box"><span>Giocatori</span><strong id="game-selected-players">0</strong></div>
+          <div class="summary-box"><span>Puntato</span><strong id="game-selected-locked">€0,00</strong></div>
+          <div class="summary-box"><span>Info</span><strong id="game-selected-rate">-</strong></div>
+          <div class="summary-box"><span>Stato</span><strong id="game-selected-status">Pronto</strong></div>
+        </div>
+
+        <div id="poker-selection-phase">
+          <div class="poker-setup-section">
+            <div class="poker-player-row">
+              <select id="poker-player-select" class="poker-player-select">
+                <option value="">Seleziona giocatore</option>
+              </select>
+              <input type="number" id="poker-bet-amount" class="poker-bet-input" placeholder="Punta €" step="0.01" min="0">
+              <button type="button" id="add-player-btn" class="button-secondary">Aggiungi</button>
+            </div>
+            <div id="poker-players-list" class="poker-players-list"></div>
+          </div>
+        </div>
+
+        <div id="poker-result-phase" class="poker-result-phase" hidden>
+          <h3>Fiches Finali</h3>
+          <div id="poker-result-list" class="poker-result-list"></div>
+        </div>
+
+        <p id="game-status-text" class="status-text" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
