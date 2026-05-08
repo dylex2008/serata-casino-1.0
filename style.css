@@ -1435,6 +1435,27 @@ textarea:focus {
   .manual-balance-actions {
     grid-template-columns: 1fr;
   }
+
+  .poker-result-entry,
+  .blackjack-result-entry,
+  .horse-player-entry,
+  .roulette-player-entry {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .chip-result-controls {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chip-result-controls input,
+  .chip-result-delta {
+    width: 100%;
+    text-align: left;
+  }
 }
 
 .player-stats-container {
@@ -1778,6 +1799,40 @@ textarea:focus {
   border-radius: 12px;
   border: 2px solid transparent;
   transition: all 0.2s ease;
+}
+
+.chip-result-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chip-result-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chip-result-controls input {
+  width: 150px;
+  padding: 10px 12px;
+  border: 2px solid var(--line-strong);
+  border-radius: 10px;
+  font: inherit;
+}
+
+.chip-result-delta {
+  min-width: 92px;
+  text-align: right;
+  font-size: 1rem;
+}
+
+.chip-result-delta.positive {
+  color: #22c55e;
+}
+
+.chip-result-delta.negative {
+  color: #ef4444;
 }
 
 .poker-result-entry.winner,
