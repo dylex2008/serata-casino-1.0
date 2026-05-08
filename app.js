@@ -57,11 +57,6 @@ const pageState = {
   currentGamePage: document.body.dataset.gamePage || null,
 };
 
-const miniGameBoardsState = {
-  poker: createMiniGameBoardState(),
-  blackjack: createMiniGameBoardState(),
-};
-
 document.addEventListener("DOMContentLoaded", () => {
   if (document.querySelector("#create-room-form")) {
     initHomePage();
@@ -277,63 +272,6 @@ async function initRankingPage() {
 
   manualAddButton?.addEventListener("click", () => runManualBalanceUpdate("add"));
   manualRemoveButton?.addEventListener("click", () => runManualBalanceUpdate("remove"));
-
-  miniBoardsRoot?.addEventListener("click", async (event) => {
-    const board = event.target.closest("[data-mini-board]");
-    const actionButton = event.target.closest("[data-mini-action]");
-
-    if (!board || !actionButton) {
-      return;
-    }
-
-    const { miniBoard: gameKey } = board.dataset;
-    if (!gameKey || !miniGameBoardsState[gameKey]) {
-      return;
-    }
-
-    if (actionButton.dataset.miniAction === "remove-player") {
-      const index = Number(actionButton.dataset.playerIndex);
-      removeMiniGameParticipant(gameKey, index);
-      renderMiniBoards(miniBoardsRoot, pageState.currentRoom);
-      return;
-    }
-
-    if (actionButton.dataset.miniAction === "add-player") {
-      addMiniGameParticipant(board, gameKey);
-      renderMiniBoards(miniBoardsRoot, pageState.currentRoom);
-      return;
-    }
-
-    if (actionButton.dataset.miniAction === "start-game") {
-      startMiniGameBoard(gameKey);
-      renderMiniBoards(miniBoardsRoot, pageState.currentRoom);
-      return;
-    }
-
-    if (actionButton.dataset.miniAction === "finish-game") {
-      await finishMiniGameBoard(gameKey, roomCode);
-      renderMiniBoards(miniBoardsRoot, pageState.currentRoom);
-    }
-  });
-
-  miniBoardsRoot?.addEventListener("input", (event) => {
-    const input = event.target.closest("[data-end-value]");
-    const board = event.target.closest("[data-mini-board]");
-
-    if (!board || !input) {
-      return;
-    }
-
-    const { miniBoard: gameKey } = board.dataset;
-    const index = Number(input.dataset.playerIndex);
-    const participant = miniGameBoardsState[gameKey]?.participants?.[index];
-
-    if (!participant) {
-      return;
-    }
-
-    participant.endValue = input.value;
-  });
 
   attachRoomWatcher(roomCode, (room) => {
     roomNode.textContent = roomCode;
@@ -956,23 +894,17 @@ function renderMiniBoards(container, room) {
   const crownImg = `<img src="${crownAssetUrl}" alt="crown" style="width:36px;height:36px;object-fit:contain;">`;
   container.querySelectorAll("[data-mini-board]").forEach((board) => {
     const gameKey = board.dataset.miniBoard;
-    if (miniGameBoardsState[gameKey]) {
-      renderInteractiveMiniBoard(board, room, gameKey);
-      return;
-    }
-
-    const ranking = buildMiniRanking(room.players || {}, gameKey);
+    const ranking = buildMiniRanking(room.players || {}, gameKey).slice(0, 1);
 
     board.innerHTML = `
       <h3>${GAME_LABELS[gameKey]}</h3>
       ${
         ranking.length
           ? ranking
-              .slice(0, 2)
               .map(
-                (player, index) => `
-                  <div class="mini-row ${index === 0 ? "mini-top" : ""}">
-                    <span>${index === 0 ? crownImg : index + 1}</span>
+                (player) => `
+                  <div class="mini-row mini-top">
+                    <span>${crownImg}</span>
                     <span>${escapeHtml(player.name)}</span>
                     <strong>${currencyFormatter.format(player.value)}</strong>
                   </div>
@@ -983,214 +915,6 @@ function renderMiniBoards(container, room) {
       }
     `;
   });
-}
-
-function createMiniGameBoardState() {
-  return {
-    participants: [],
-    gameStarted: false,
-    message: "",
-    isError: false,
-  };
-}
-
-function setMiniGameBoardStatus(gameKey, message, isError = false) {
-  if (!miniGameBoardsState[gameKey]) {
-    return;
-  }
-
-  miniGameBoardsState[gameKey].message = message;
-  miniGameBoardsState[gameKey].isError = isError;
-}
-
-function resetMiniGameBoardState(gameKey) {
-  miniGameBoardsState[gameKey] = createMiniGameBoardState();
-}
-
-function addMiniGameParticipant(board, gameKey) {
-  const state = miniGameBoardsState[gameKey];
-  const playerName = board.querySelector("[data-mini-player-select]")?.value || "";
-  const betAmount = parseNumber(board.querySelector("[data-mini-bet-input]")?.value);
-
-  if (state.gameStarted) {
-    setMiniGameBoardStatus(gameKey, "La partita e' gia iniziata", true);
-    return;
-  }
-
-  if (!playerName) {
-    setMiniGameBoardStatus(gameKey, "Seleziona un giocatore", true);
-    return;
-  }
-
-  if (!betAmount || betAmount <= 0) {
-    setMiniGameBoardStatus(gameKey, "Inserisci una puntata valida", true);
-    return;
-  }
-
-  if (state.participants.some((participant) => participant.name === playerName)) {
-    setMiniGameBoardStatus(gameKey, "Giocatore gia inserito", true);
-    return;
-  }
-
-  state.participants.push({
-    name: playerName,
-    bet: betAmount,
-    endValue: "",
-  });
-  setMiniGameBoardStatus(gameKey, "", false);
-}
-
-function removeMiniGameParticipant(gameKey, index) {
-  const state = miniGameBoardsState[gameKey];
-
-  if (!state || state.gameStarted) {
-    return;
-  }
-
-  state.participants.splice(index, 1);
-  setMiniGameBoardStatus(gameKey, "", false);
-}
-
-function startMiniGameBoard(gameKey) {
-  const state = miniGameBoardsState[gameKey];
-
-  if (state.participants.length < 2) {
-    setMiniGameBoardStatus(gameKey, "Servono almeno 2 giocatori", true);
-    return;
-  }
-
-  state.gameStarted = true;
-  setMiniGameBoardStatus(gameKey, "Inserisci il totale finale di ogni giocatore", false);
-}
-
-async function finishMiniGameBoard(gameKey, roomCode) {
-  const state = miniGameBoardsState[gameKey];
-
-  if (!state.gameStarted) {
-    setMiniGameBoardStatus(gameKey, "Avvia prima la partita", true);
-    return;
-  }
-
-  const results = {};
-  for (const participant of state.participants) {
-    const endValue = parseNumber(participant.endValue);
-
-    if (endValue === null || endValue < 0) {
-      setMiniGameBoardStatus(gameKey, `Inserisci il saldo finale di ${participant.name}`, true);
-      return;
-    }
-
-    results[participant.name] = endValue - participant.bet;
-  }
-
-  try {
-    await endSubGame(roomCode, gameKey, results);
-    updatePlayerGameHistory(roomCode, gameKey, results);
-    resetMiniGameBoardState(gameKey);
-    setMiniGameBoardStatus(gameKey, "Classifica aggiornata", false);
-  } catch (error) {
-    setMiniGameBoardStatus(gameKey, error.message, true);
-  }
-}
-
-function renderInteractiveMiniBoard(board, room, gameKey) {
-  const state = miniGameBoardsState[gameKey];
-  const ranking = buildMiniRanking(room.players || {}, gameKey);
-  const players = room.playersList || [];
-  const participantsSummary = state.participants.reduce((sum, participant) => sum + participant.bet, 0);
-  const setupLocked = room.status === "ended" || state.gameStarted;
-  const statusTone = state.isError ? "error" : "ok";
-
-  board.innerHTML = `
-    <h3>${GAME_LABELS[gameKey]}</h3>
-    <div class="mini-game-status-row">
-      <span>${state.participants.length} giocatori</span>
-      <strong>${currencyFormatter.format(participantsSummary)}</strong>
-    </div>
-    <div class="mini-game-panel">
-      ${
-        state.gameStarted
-          ? `
-            <div class="mini-game-phase-label">Saldo finale</div>
-            <div class="mini-game-results-list">
-              ${state.participants
-                .map(
-                  (participant, index) => `
-                    <div class="mini-game-result-row">
-                      <div class="mini-game-player-meta">
-                        <span>${escapeHtml(participant.name)}</span>
-                        <small>Punta ${currencyFormatter.format(participant.bet)}</small>
-                      </div>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="Finale €"
-                        value="${participant.endValue === "" ? "" : escapeHtml(participant.endValue)}"
-                        data-end-value
-                        data-player-index="${index}"
-                      />
-                    </div>
-                  `
-                )
-                .join("")}
-            </div>
-            <button type="button" class="mini-game-action" data-mini-action="finish-game">Aggiorna classifica</button>
-          `
-          : `
-            <div class="mini-game-entry-row">
-              <select data-mini-player-select ${setupLocked ? "disabled" : ""}>
-                <option value="">Seleziona giocatore</option>
-                ${players
-                  .map((player) => `<option value="${escapeHtml(player)}">${escapeHtml(player)}</option>`)
-                  .join("")}
-              </select>
-              <input type="number" min="0" step="0.01" placeholder="Punta €" data-mini-bet-input ${setupLocked ? "disabled" : ""} />
-              <button type="button" class="mini-game-add-btn" data-mini-action="add-player" ${setupLocked ? "disabled" : ""}>Aggiungi</button>
-            </div>
-            <div class="mini-game-players-list">
-              ${
-                state.participants.length
-                  ? state.participants
-                      .map(
-                        (participant, index) => `
-                          <div class="mini-game-player-row">
-                            <div class="mini-game-player-meta">
-                              <span>${escapeHtml(participant.name)}</span>
-                              <small>${currencyFormatter.format(participant.bet)}</small>
-                            </div>
-                            <button type="button" class="mini-game-remove-btn" data-mini-action="remove-player" data-player-index="${index}">×</button>
-                          </div>
-                        `
-                      )
-                      .join("")
-                  : '<p class="mini-empty mini-empty-compact">Nessun giocatore inserito</p>'
-              }
-            </div>
-            <button type="button" class="mini-game-action" data-mini-action="start-game" ${room.status === "ended" ? "disabled" : ""}>Inizia partita</button>
-          `
-      }
-      <p class="mini-game-inline-status mini-game-inline-status-${statusTone}">${escapeHtml(state.message || " ")}</p>
-    </div>
-    <div class="mini-game-ranking-preview">
-      ${
-        ranking.length
-          ? ranking
-              .slice(0, 2)
-              .map(
-                (player, index) => `
-                  <div class="mini-row ${index === 0 ? "mini-top" : ""}">
-                    <span>${index === 0 ? `<img src="${crownAssetUrl}" alt="crown" style="width:28px;height:28px;object-fit:contain;">` : index + 1}</span>
-                    <span>${escapeHtml(player.name)}</span>
-                    <strong>${currencyFormatter.format(player.value)}</strong>
-                  </div>
-                `
-              )
-              .join("")
-          : '<p class="mini-empty">Nessun risultato</p>'
-      }
-    </div>
-  `;
 }
 
 function renderChipStack(container, breakdown) {
