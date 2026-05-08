@@ -1,4 +1,5 @@
 import {
+  applyDirectGameResults,
   adjustPlayerBalance,
   CHIP_GAMES,
   createRoom,
@@ -894,7 +895,7 @@ function renderMiniBoards(container, room) {
   const crownImg = `<img src="${crownAssetUrl}" alt="crown" style="width:36px;height:36px;object-fit:contain;">`;
   container.querySelectorAll("[data-mini-board]").forEach((board) => {
     const gameKey = board.dataset.miniBoard;
-    const ranking = buildMiniRanking(room.players || {}, gameKey).slice(0, 1);
+    const ranking = buildMiniRanking(room.players || {}, gameKey).slice(0, 3);
 
     board.innerHTML = `
       <h3>${GAME_LABELS[gameKey]}</h3>
@@ -902,9 +903,9 @@ function renderMiniBoards(container, room) {
         ranking.length
           ? ranking
               .map(
-                (player) => `
-                  <div class="mini-row mini-top">
-                    <span>${crownImg}</span>
+                (player, index) => `
+                  <div class="mini-row ${index === 0 ? "mini-top" : ""}">
+                    <span>${index === 0 ? crownImg : index + 1}</span>
                     <span>${escapeHtml(player.name)}</span>
                     <strong>${currencyFormatter.format(player.value)}</strong>
                   </div>
@@ -967,163 +968,43 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-const horseRacingState = {
-  participants: [],
-  roomCode: null,
-  roomData: null,
+const directResultStates = {
+  horse_racing: { entries: [], roomData: null },
+  roulette: { entries: [], roomData: null },
+};
+
+const chipGameStates = {
+  poker: { participants: [], roomData: null, gameStarted: false },
+  blackjack: { participants: [], roomData: null, gameStarted: false },
 };
 
 async function initHorseRacingPage() {
-  const playerSelect = document.querySelector("#horse-player-select");
-  const betInput = document.querySelector("#horse-bet-amount");
-  const resultSelect = document.querySelector("#horse-result-select");
-  const addBtn = document.querySelector("#add-player-btn");
-  const finishBtn = document.querySelector("#finish-subgame");
-  const playersList = document.querySelector("#horse-players-list");
-  const statusNode = document.querySelector("#game-status-text");
-  const summaryPlayers = document.querySelector("#game-selected-players");
-  const summaryLocked = document.querySelector("#game-selected-locked");
-  const summaryRate = document.querySelector("#game-selected-rate");
-  const summaryStatus = document.querySelector("#game-selected-status");
-  const roomCodeNode = document.querySelector("#game-room-code");
-  const roomStateNode = document.querySelector("#game-room-state");
-
-  if (hasPlaceholderConfig) {
-    setStatus(statusNode, "Firebase config missing.", true);
-    return;
-  }
-
-  const roomCode = await resolveCurrentRoom();
-  if (!roomCode) {
-    window.location.href = "index.html";
-    return;
-  }
-
-  horseRacingState.roomCode = roomCode;
-
-  attachRoomWatcher(roomCode, (room) => {
-    horseRacingState.roomData = room;
-    roomCodeNode.textContent = roomCode;
-    setRoomBadge(
-      roomStateNode,
-      room.status === "ended" ? "Chiusa" : "Attiva",
-      room.status
-    );
-
-    populatePlayerSelectForStats(playerSelect, room.playersList);
-  }, statusNode);
-
-  addBtn.addEventListener("click", () => {
-    const playerName = playerSelect.value;
-    const betAmount = parseNumber(betInput.value);
-    const result = resultSelect.value;
-
-    if (!playerName) {
-      setStatus(statusNode, "Seleziona un giocatore", true);
-      return;
-    }
-
-    if (!betAmount || betAmount <= 0) {
-      setStatus(statusNode, "Inserisci un importo valido", true);
-      return;
-    }
-
-    if (!result) {
-      setStatus(statusNode, "Seleziona il risultato", true);
-      return;
-    }
-
-    if (horseRacingState.participants.find(p => p.name === playerName)) {
-      setStatus(statusNode, "Giocatore già aggiunto", true);
-      return;
-    }
-
-    const winnerCount = horseRacingState.participants.filter(p => p.result === "win").length;
-    if (result === "win" && winnerCount >= 1) {
-      setStatus(statusNode, "Può esserci un solo vincitore", true);
-      return;
-    }
-
-    horseRacingState.participants.push({ name: playerName, bet: betAmount, result: result });
-    playerSelect.value = "";
-    betInput.value = "";
-    resultSelect.value = "";
-    renderHorsePlayersList();
-    updateHorseSummary();
-    setStatus(statusNode, "", false);
+  return initDirectResultPage("horse_racing", {
+    playerSelectId: "horse-player-select",
+    amountInputId: "horse-bet-amount",
+    addButtonId: "add-player-btn",
+    finishButtonId: "finish-subgame",
+    listId: "horse-players-list",
   });
-
-  finishBtn.addEventListener("click", async () => {
-    if (horseRacingState.participants.length === 0) {
-      setStatus(statusNode, "Nessun giocatore aggiunto", true);
-      return;
-    }
-
-    const winner = horseRacingState.participants.find(p => p.result === "win");
-    if (!winner) {
-      setStatus(statusNode, "Seleziona un vincitore", true);
-      return;
-    }
-
-    const totalPot = horseRacingState.participants.reduce((sum, p) => sum + p.bet, 0);
-    const results = {};
-
-    horseRacingState.participants.forEach(p => {
-      if (p.result === "win") {
-        results[p.name] = totalPot - p.bet;
-      } else {
-        results[p.name] = -p.bet;
-      }
-    });
-
-    try {
-      await endSubGame(roomCode, "horse_racing", results);
-      setStatus(statusNode, `Partita terminata! ${escapeHtml(winner.name)} vince ${currencyFormatter.format(totalPot)}`, false);
-
-      horseRacingState.participants = [];
-      renderHorsePlayersList();
-      updateHorseSummary();
-    } catch (error) {
-      setStatus(statusNode, error.message, true);
-    }
-  });
-    function renderHorsePlayersList() {
-    playersList.innerHTML = horseRacingState.participants
-      .map((p) => `
-        <div class="horse-player-entry ${p.result === "win" ? "winner" : "loser"}">
-          <span class="player-name">${escapeHtml(p.name)}</span>
-          <span class="bet-amount">${currencyFormatter.format(p.bet)}</span>
-          <span class="player-result">${p.result === "win" ? "✓ Vince" : "✗ Perde"}</span>
-        </div>
-      `)
-      .join("");
-  }
-
-  function updateHorseSummary() {
-    const totalPot = horseRacingState.participants.reduce((sum, p) => sum + p.bet, 0);
-    const count = horseRacingState.participants.length;
-    const winner = horseRacingState.participants.find(p => p.result === "win");
-
-    summaryPlayers.textContent = count;
-    summaryLocked.textContent = currencyFormatter.format(totalPot);
-    summaryRate.textContent = winner ? "Vince tutto" : "-";
-    summaryStatus.textContent = count > 0 ? (winner ? "Pronto" : "In attesa") : "Pronto";
-  }
 }
-
-const rouletteState = {
-  participants: [],
-  roomCode: null,
-  roomData: null,
-};
 
 async function initRoulettePage() {
-  const playerSelect = document.querySelector("#roulette-player-select");
-  const betInput = document.querySelector("#roulette-bet-amount");
-  const resultSelect = document.querySelector("#roulette-result-select");
-  const addBtn = document.querySelector("#add-player-btn");
-  const finishBtn = document.querySelector("#finish-subgame");
-  const playersList = document.querySelector("#roulette-players-list");
+  return initDirectResultPage("roulette", {
+    playerSelectId: "roulette-player-select",
+    amountInputId: "roulette-bet-amount",
+    addButtonId: "add-player-btn",
+    finishButtonId: "finish-subgame",
+    listId: "roulette-players-list",
+  });
+}
+
+async function initDirectResultPage(gameKey, ids) {
+  const state = directResultStates[gameKey];
+  const playerSelect = document.querySelector(`#${ids.playerSelectId}`);
+  const amountInput = document.querySelector(`#${ids.amountInputId}`);
+  const addBtn = document.querySelector(`#${ids.addButtonId}`);
+  const finishBtn = document.querySelector(`#${ids.finishButtonId}`);
+  const playersList = document.querySelector(`#${ids.listId}`);
   const statusNode = document.querySelector("#game-status-text");
   const summaryPlayers = document.querySelector("#game-selected-players");
   const summaryLocked = document.querySelector("#game-selected-locked");
@@ -1143,319 +1024,122 @@ async function initRoulettePage() {
     return;
   }
 
-  rouletteState.roomCode = roomCode;
-
   attachRoomWatcher(roomCode, (room) => {
-    rouletteState.roomData = room;
+    state.roomData = room;
     roomCodeNode.textContent = roomCode;
-    setRoomBadge(
-      roomStateNode,
-      room.status === "ended" ? "Chiusa" : "Attiva",
-      room.status
-    );
-
+    setRoomBadge(roomStateNode, room.status === "ended" ? "Chiusa" : "Attiva", room.status);
     populatePlayerSelectForStats(playerSelect, room.playersList);
   }, statusNode);
 
-  addBtn.addEventListener("click", () => {
+  addBtn?.addEventListener("click", () => {
     const playerName = playerSelect.value;
-    const betAmount = parseNumber(betInput.value);
-    const result = resultSelect.value;
+    const amount = parseNumber(amountInput.value);
 
     if (!playerName) {
       setStatus(statusNode, "Seleziona un giocatore", true);
       return;
     }
 
-    if (!betAmount || betAmount <= 0) {
-      setStatus(statusNode, "Inserisci un importo valido", true);
+    if (amount === null || amount === 0) {
+      setStatus(statusNode, "Inserisci un importo valido. Usa anche il segno meno se serve.", true);
       return;
     }
 
-    if (!result) {
-      setStatus(statusNode, "Seleziona il risultato", true);
-      return;
-    }
-
-    if (rouletteState.participants.find(p => p.name === playerName)) {
-      setStatus(statusNode, "Giocatore già aggiunto", true);
-      return;
-    }
-
-    const winnerCount = rouletteState.participants.filter(p => p.result === "win").length;
-    if (result === "win" && winnerCount >= 1) {
-      setStatus(statusNode, "Può esserci un solo vincitore", true);
-      return;
-    }
-
-    rouletteState.participants.push({ name: playerName, bet: betAmount, result: result });
+    state.entries.push({ name: playerName, amount });
     playerSelect.value = "";
-    betInput.value = "";
-    resultSelect.value = "";
-    renderRoulettePlayersList();
-    updateRouletteSummary();
+    amountInput.value = "";
+    renderDirectResultEntries();
+    updateDirectResultSummary();
     setStatus(statusNode, "", false);
   });
 
-  finishBtn.addEventListener("click", async () => {
-    if (rouletteState.participants.length === 0) {
-      setStatus(statusNode, "Nessun giocatore aggiunto", true);
+  finishBtn?.addEventListener("click", async () => {
+    if (!state.entries.length) {
+      setStatus(statusNode, "Nessun risultato inserito", true);
       return;
     }
 
-    const winner = rouletteState.participants.find(p => p.result === "win");
-    if (!winner) {
-      setStatus(statusNode, "Seleziona un vincitore", true);
-      return;
-    }
+    const results = state.entries.reduce((accumulator, entry) => {
+      accumulator[entry.name] = (accumulator[entry.name] || 0) + entry.amount;
+      return accumulator;
+    }, {});
 
-    const totalPot = rouletteState.participants.reduce((sum, p) => sum + p.bet, 0);
-    const results = {};
-
-    rouletteState.participants.forEach(p => {
-      if (p.result === "win") {
-        results[p.name] = totalPot - p.bet;
-      } else {
-        results[p.name] = -p.bet;
-      }
-    });
-
+    finishBtn.disabled = true;
     try {
-      await endSubGame(roomCode, "roulette", results);
-      setStatus(statusNode, `Partita terminata! ${escapeHtml(winner.name)} vince ${currencyFormatter.format(totalPot)}`, false);
-
-      rouletteState.participants = [];
-      renderRoulettePlayersList();
-      updateRouletteSummary();
+      await applyDirectGameResults(roomCode, gameKey, results);
+      updatePlayerGameHistory(roomCode, gameKey, results);
+      state.entries = [];
+      renderDirectResultEntries();
+      updateDirectResultSummary();
+      setStatus(statusNode, "Classifica aggiornata.", false);
     } catch (error) {
       setStatus(statusNode, error.message, true);
+    } finally {
+      finishBtn.disabled = false;
     }
   });
 
-  function renderRoulettePlayersList() {
-    playersList.innerHTML = rouletteState.participants
-      .map((p) => `
-        <div class="roulette-player-entry ${p.result === "win" ? "winner" : "loser"}">
-          <span class="player-name">${escapeHtml(p.name)}</span>
-          <span class="bet-amount">${currencyFormatter.format(p.bet)}</span>
-          <span class="player-result">${p.result === "win" ? "✓ Vince" : "✗ Perde"}</span>
-        </div>
-      `)
-      .join("");
+  function renderDirectResultEntries() {
+    playersList.innerHTML = state.entries.length
+      ? state.entries
+          .map((entry) => `
+            <div class="${gameKey === "horse_racing" ? "horse-player-entry" : "roulette-player-entry"} ${entry.amount >= 0 ? "winner" : "loser"}">
+              <span class="player-name">${escapeHtml(entry.name)}</span>
+              <span class="bet-amount">${entry.amount >= 0 ? "+" : ""}${currencyFormatter.format(entry.amount)}</span>
+              <span class="player-result">${entry.amount >= 0 ? "Guadagna" : "Perde"}</span>
+            </div>
+          `)
+          .join("")
+      : '<p class="mini-empty">Nessun risultato inserito</p>';
   }
 
-  function updateRouletteSummary() {
-    const totalPot = rouletteState.participants.reduce((sum, p) => sum + p.bet, 0);
-    const count = rouletteState.participants.length;
-    const winner = rouletteState.participants.find(p => p.result === "win");
+  function updateDirectResultSummary() {
+    const count = state.entries.length;
+    const balance = state.entries.reduce((sum, entry) => sum + entry.amount, 0);
 
     summaryPlayers.textContent = count;
-    summaryLocked.textContent = currencyFormatter.format(totalPot);
-    summaryRate.textContent = winner ? "Vince tutto" : "-";
-    summaryStatus.textContent = count > 0 ? (winner ? "Pronto" : "In attesa") : "Pronto";
+    summaryLocked.textContent = `${balance >= 0 ? "+" : ""}${currencyFormatter.format(balance)}`;
+    summaryRate.textContent = "Risultato diretto";
+    summaryStatus.textContent = count ? "Da inviare" : "Pronto";
   }
 }
-
-const pokerState = {
-  participants: [],
-  gameStarted: false,
-  roomCode: null,
-  roomData: null,
-};
 
 async function initPokerPage() {
-  const playerSelect = document.querySelector("#poker-player-select");
-  const betInput = document.querySelector("#poker-bet-amount");
-  const addBtn = document.querySelector("#add-player-btn");
-  const startBtn = document.querySelector("#start-subgame");
-  const finishBtn = document.querySelector("#finish-subgame");
-  const playersList = document.querySelector("#poker-players-list");
-  const resultPhase = document.querySelector("#poker-result-phase");
-  const resultList = document.querySelector("#poker-result-list");
-  const statusNode = document.querySelector("#game-status-text");
-  const summaryPlayers = document.querySelector("#game-selected-players");
-  const summaryLocked = document.querySelector("#game-selected-locked");
-  const summaryRate = document.querySelector("#game-selected-rate");
-  const summaryStatus = document.querySelector("#game-selected-status");
-  const roomCodeNode = document.querySelector("#game-room-code");
-  const roomStateNode = document.querySelector("#game-room-state");
-
-  if (hasPlaceholderConfig) {
-    setStatus(statusNode, "Firebase config missing.", true);
-    return;
-  }
-
-  const roomCode = await resolveCurrentRoom();
-  if (!roomCode) {
-    window.location.href = "index.html";
-    return;
-  }
-
-  pokerState.roomCode = roomCode;
-
-  attachRoomWatcher(roomCode, (room) => {
-    pokerState.roomData = room;
-    roomCodeNode.textContent = roomCode;
-    setRoomBadge(
-      roomStateNode,
-      room.status === "ended" ? "Chiusa" : "Attiva",
-      room.status
-    );
-
-    populatePlayerSelectForStats(playerSelect, room.playersList);
-  }, statusNode);
-
-  addBtn.addEventListener("click", () => {
-    if (pokerState.gameStarted) {
-      setStatus(statusNode, "Gioco già iniziato", true);
-      return;
-    }
-
-    const playerName = playerSelect.value;
-    const betAmount = parseNumber(betInput.value);
-
-    if (!playerName) {
-      setStatus(statusNode, "Seleziona un giocatore", true);
-      return;
-    }
-
-    if (!betAmount || betAmount <= 0) {
-      setStatus(statusNode, "Inserisci un importo valido", true);
-      return;
-    }
-
-    if (pokerState.participants.find(p => p.name === playerName)) {
-      setStatus(statusNode, "Giocatore già aggiunto", true);
-      return;
-    }
-
-    pokerState.participants.push({ name: playerName, bet: betAmount, result: null });
-    playerSelect.value = "";
-    betInput.value = "";
-    renderPokerPlayersList();
-    updatePokerSummary();
-    setStatus(statusNode, "", false);
+  return initChipGamePage("poker", {
+    playerSelectId: "poker-player-select",
+    betInputId: "poker-bet-amount",
+    addButtonId: "add-player-btn",
+    startButtonId: "start-subgame",
+    finishButtonId: "finish-subgame",
+    listId: "poker-players-list",
+    resultPhaseId: "poker-result-phase",
+    resultListId: "poker-result-list",
   });
-
-  startBtn.addEventListener("click", () => {
-    if (pokerState.participants.length < 2) {
-      setStatus(statusNode, "Servono almeno 2 giocatori", true);
-      return;
-    }
-
-    pokerState.gameStarted = true;
-    startBtn.disabled = true;
-    finishBtn.disabled = false;
-    summaryStatus.textContent = "In corso";
-    resultPhase.hidden = false;
-    renderPokerResultList();
-    setStatus(statusNode, "Seleziona i vincitori", false);
-  });
-
-  finishBtn.addEventListener("click", async () => {
-    const winners = pokerState.participants.filter(p => p.result === "win");
-    const losers = pokerState.participants.filter(p => p.result === "lose");
-
-    if (winners.length === 0) {
-      setStatus(statusNode, "Seleziona almeno un vincitore", true);
-      return;
-    }
-
-    if (losers.length === 0) {
-      setStatus(statusNode, "Seleziona almeno un perdente", true);
-      return;
-    }
-
-    const totalPot = pokerState.participants.reduce((sum, p) => sum + p.bet, 0);
-    const winPerWinner = totalPot / winners.length;
-    const results = {};
-
-    pokerState.participants.forEach(p => {
-      if (p.result === "win") {
-        results[p.name] = winPerWinner - p.bet;
-      } else {
-        results[p.name] = -p.bet;
-      }
-    });
-
-    try {
-      await endSubGame(roomCode, "poker", results);
-      setStatus(statusNode, `Partita terminata! ${winners.length} vincitore/i guadagna/no ${currencyFormatter.format(winPerWinner)}`, false);
-
-      pokerState.participants = [];
-      pokerState.gameStarted = false;
-      startBtn.disabled = false;
-      finishBtn.disabled = true;
-      resultPhase.hidden = true;
-      renderPokerPlayersList();
-      updatePokerSummary();
-      summaryStatus.textContent = "Pronto";
-    } catch (error) {
-      setStatus(statusNode, error.message, true);
-    }
-  });
-
-  function renderPokerPlayersList() {
-    playersList.innerHTML = pokerState.participants
-      .map((p) => `
-        <div class="poker-player-entry">
-          <span class="player-name">${escapeHtml(p.name)}</span>
-          <span class="bet-amount">${currencyFormatter.format(p.bet)}</span>
-        </div>
-      `)
-      .join("");
-  }
-
-  function renderPokerResultList() {
-    resultList.innerHTML = pokerState.participants
-      .map((p, index) => `
-        <div class="poker-result-entry ${p.result === "win" ? "winner" : p.result === "lose" ? "loser" : ""}" data-index="${index}">
-          <span class="player-name">${escapeHtml(p.name)}</span>
-          <span class="bet-amount">${currencyFormatter.format(p.bet)}</span>
-          <div class="result-buttons">
-            <button type="button" class="result-btn win-btn ${p.result === "win" ? "active" : ""}" data-result="win">Vince</button>
-            <button type="button" class="result-btn lose-btn ${p.result === "lose" ? "active" : ""}" data-result="lose">Perde</button>
-          </div>
-        </div>
-      `)
-      .join("");
-
-    resultList.querySelectorAll(".result-btn").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        const index = parseInt(e.target.closest(".poker-result-entry").dataset.index);
-        const result = e.target.dataset.result;
-        pokerState.participants[index].result = result;
-        renderPokerResultList();
-      });
-    });
-  }
-
-  function updatePokerSummary() {
-    const totalBet = pokerState.participants.reduce((sum, p) => sum + p.bet, 0);
-    const count = pokerState.participants.length;
-
-    summaryPlayers.textContent = count;
-    summaryLocked.textContent = currencyFormatter.format(totalBet);
-    summaryRate.textContent = pokerState.gameStarted ? "In corso" : "-";
-  }
 }
 
-const blackjackState = {
-  participants: [],
-  gameStarted: false,
-  roomCode: null,
-  roomData: null,
-};
-
 async function initBlackjackPage() {
-  const playerSelect = document.querySelector("#blackjack-player-select");
-  const betInput = document.querySelector("#blackjack-bet-amount");
-  const addBtn = document.querySelector("#add-player-btn");
-  const startBtn = document.querySelector("#start-subgame");
-  const finishBtn = document.querySelector("#finish-subgame");
-  const playersList = document.querySelector("#blackjack-players-list");
-  const resultPhase = document.querySelector("#blackjack-result-phase");
-  const resultList = document.querySelector("#blackjack-result-list");
+  return initChipGamePage("blackjack", {
+    playerSelectId: "blackjack-player-select",
+    betInputId: "blackjack-bet-amount",
+    addButtonId: "add-player-btn",
+    startButtonId: "start-subgame",
+    finishButtonId: "finish-subgame",
+    listId: "blackjack-players-list",
+    resultPhaseId: "blackjack-result-phase",
+    resultListId: "blackjack-result-list",
+  });
+}
+
+async function initChipGamePage(gameKey, ids) {
+  const state = chipGameStates[gameKey];
+  const playerSelect = document.querySelector(`#${ids.playerSelectId}`);
+  const betInput = document.querySelector(`#${ids.betInputId}`);
+  const addBtn = document.querySelector(`#${ids.addButtonId}`);
+  const startBtn = document.querySelector(`#${ids.startButtonId}`);
+  const finishBtn = document.querySelector(`#${ids.finishButtonId}`);
+  const playersList = document.querySelector(`#${ids.listId}`);
+  const resultPhase = document.querySelector(`#${ids.resultPhaseId}`);
+  const resultList = document.querySelector(`#${ids.resultListId}`);
   const statusNode = document.querySelector("#game-status-text");
   const summaryPlayers = document.querySelector("#game-selected-players");
   const summaryLocked = document.querySelector("#game-selected-locked");
@@ -1475,23 +1159,16 @@ async function initBlackjackPage() {
     return;
   }
 
-  blackjackState.roomCode = roomCode;
-
   attachRoomWatcher(roomCode, (room) => {
-    blackjackState.roomData = room;
+    state.roomData = room;
     roomCodeNode.textContent = roomCode;
-    setRoomBadge(
-      roomStateNode,
-      room.status === "ended" ? "Chiusa" : "Attiva",
-      room.status
-    );
-
+    setRoomBadge(roomStateNode, room.status === "ended" ? "Chiusa" : "Attiva", room.status);
     populatePlayerSelectForStats(playerSelect, room.playersList);
   }, statusNode);
 
-  addBtn.addEventListener("click", () => {
-    if (blackjackState.gameStarted) {
-      setStatus(statusNode, "Gioco già iniziato", true);
+  addBtn?.addEventListener("click", () => {
+    if (state.gameStarted) {
+      setStatus(statusNode, "La partita e' gia iniziata", true);
       return;
     }
 
@@ -1504,122 +1181,177 @@ async function initBlackjackPage() {
     }
 
     if (!betAmount || betAmount <= 0) {
-      setStatus(statusNode, "Inserisci un importo valido", true);
+      setStatus(statusNode, "Inserisci una puntata valida", true);
       return;
     }
 
-    if (blackjackState.participants.find(p => p.name === playerName)) {
-      setStatus(statusNode, "Giocatore già aggiunto", true);
+    if (state.participants.some((participant) => participant.name === playerName)) {
+      setStatus(statusNode, "Giocatore gia inserito", true);
       return;
     }
 
-    blackjackState.participants.push({ name: playerName, bet: betAmount, result: null });
+    state.participants.push({
+      name: playerName,
+      bet: betAmount,
+      chips: betAmount,
+      finalChips: "",
+    });
     playerSelect.value = "";
     betInput.value = "";
-    renderBlackjackPlayersList();
-    updateBlackjackSummary();
+    renderChipGamePlayers();
+    updateChipGameSummary();
     setStatus(statusNode, "", false);
   });
 
-  startBtn.addEventListener("click", () => {
-    if (blackjackState.participants.length < 2) {
+  startBtn?.addEventListener("click", async () => {
+    if (state.participants.length < 2) {
       setStatus(statusNode, "Servono almeno 2 giocatori", true);
       return;
     }
 
-    blackjackState.gameStarted = true;
     startBtn.disabled = true;
-    finishBtn.disabled = false;
-    summaryStatus.textContent = "In corso";
-    resultPhase.hidden = false;
-    renderBlackjackResultList();
-    setStatus(statusNode, "Seleziona i vincitori", false);
-  });
-
-  finishBtn.addEventListener("click", async () => {
-    const winners = blackjackState.participants.filter(p => p.result === "win");
-    const losers = blackjackState.participants.filter(p => p.result === "lose");
-
-    if (winners.length === 0) {
-      setStatus(statusNode, "Seleziona almeno un vincitore", true);
-      return;
-    }
-
-    if (losers.length === 0) {
-      setStatus(statusNode, "Seleziona almeno un perdente", true);
-      return;
-    }
-
-    const totalPot = blackjackState.participants.reduce((sum, p) => sum + p.bet, 0);
-    const winPerWinner = totalPot / winners.length;
-    const results = {};
-
-    blackjackState.participants.forEach(p => {
-      if (p.result === "win") {
-        results[p.name] = winPerWinner - p.bet;
-      } else {
-        results[p.name] = -p.bet;
-      }
-    });
-
     try {
-      await endSubGame(roomCode, "blackjack", results);
-      setStatus(statusNode, `Partita terminata! ${winners.length} vincitore/i guadagna/no ${currencyFormatter.format(winPerWinner)}`, false);
-
-      blackjackState.participants = [];
-      blackjackState.gameStarted = false;
-      startBtn.disabled = false;
-      finishBtn.disabled = true;
-      resultPhase.hidden = true;
-      renderBlackjackPlayersList();
-      updateBlackjackSummary();
-      summaryStatus.textContent = "Pronto";
+      await startGame(
+        roomCode,
+        gameKey,
+        state.participants.map((participant) => ({
+          playerName: participant.name,
+          investedEuro: participant.bet,
+        })),
+        1
+      );
+      state.gameStarted = true;
+      resultPhase.hidden = false;
+      finishBtn.disabled = false;
+      renderChipGameResults();
+      updateChipGameSummary();
+      setStatus(statusNode, "Partita iniziata. Inserisci le fiches rimaste.", false);
     } catch (error) {
       setStatus(statusNode, error.message, true);
+    } finally {
+      startBtn.disabled = false;
     }
   });
 
-  function renderBlackjackPlayersList() {
-    playersList.innerHTML = blackjackState.participants
-      .map((p) => `
-        <div class="blackjack-player-entry">
-          <span class="player-name">${escapeHtml(p.name)}</span>
-          <span class="bet-amount">${currencyFormatter.format(p.bet)}</span>
-        </div>
-      `)
-      .join("");
+  finishBtn?.addEventListener("click", async () => {
+    if (!state.gameStarted) {
+      setStatus(statusNode, "Avvia prima la partita", true);
+      return;
+    }
+
+    const chipUpdates = [];
+    const results = {};
+
+    for (const participant of state.participants) {
+      const finalChips = parseNumber(participant.finalChips);
+
+      if (finalChips === null || finalChips < 0) {
+        setStatus(statusNode, `Inserisci le fiches finali di ${participant.name}`, true);
+        return;
+      }
+
+      chipUpdates.push({
+        playerName: participant.name,
+        currentChips: finalChips,
+      });
+      results[participant.name] = finalChips - participant.bet;
+    }
+
+    finishBtn.disabled = true;
+    try {
+      await updateGameChips(roomCode, gameKey, chipUpdates);
+      await endSubGame(roomCode, gameKey, results);
+      updatePlayerGameHistory(roomCode, gameKey, results);
+      state.participants = [];
+      state.gameStarted = false;
+      resultPhase.hidden = true;
+      renderChipGamePlayers();
+      updateChipGameSummary();
+      setStatus(statusNode, "Classifica aggiornata.", false);
+    } catch (error) {
+      setStatus(statusNode, error.message, true);
+    } finally {
+      finishBtn.disabled = false;
+    }
+  });
+
+  function renderChipGamePlayers() {
+    playersList.innerHTML = state.participants.length
+      ? state.participants
+          .map((participant) => `
+            <div class="${gameKey === "poker" ? "poker-player-entry" : "blackjack-player-entry"}">
+              <span class="player-name">${escapeHtml(participant.name)}</span>
+              <span class="bet-amount">${currencyFormatter.format(participant.bet)}</span>
+              <span class="player-result">${integerFormatter.format(participant.chips)} fiches</span>
+            </div>
+          `)
+          .join("")
+      : '<p class="mini-empty">Nessun giocatore inserito</p>';
   }
 
-  function renderBlackjackResultList() {
-    resultList.innerHTML = blackjackState.participants
-      .map((p, index) => `
-        <div class="blackjack-result-entry ${p.result === "win" ? "winner" : p.result === "lose" ? "loser" : ""}" data-index="${index}">
-          <span class="player-name">${escapeHtml(p.name)}</span>
-          <span class="bet-amount">${currencyFormatter.format(p.bet)}</span>
-          <div class="result-buttons">
-            <button type="button" class="result-btn win-btn ${p.result === "win" ? "active" : ""}" data-result="win">Vince</button>
-            <button type="button" class="result-btn lose-btn ${p.result === "lose" ? "active" : ""}" data-result="lose">Perde</button>
+  function renderChipGameResults() {
+    resultList.innerHTML = state.participants
+      .map((participant, index) => {
+        const finalChips = parseNumber(participant.finalChips);
+        const delta = finalChips === null ? null : finalChips - participant.bet;
+
+        return `
+          <div class="${gameKey === "poker" ? "poker-result-entry" : "blackjack-result-entry"}">
+            <div class="chip-result-main">
+              <span class="player-name">${escapeHtml(participant.name)}</span>
+              <span class="bet-amount">Partenza ${integerFormatter.format(participant.chips)} fiches</span>
+            </div>
+            <div class="chip-result-controls">
+              <input
+                type="number"
+                min="0"
+                step="1"
+                placeholder="Fiches finali"
+                value="${participant.finalChips === "" ? "" : escapeHtml(participant.finalChips)}"
+                data-chip-result-index="${index}"
+              />
+              <strong class="chip-result-delta ${delta === null ? "" : delta >= 0 ? "positive" : "negative"}">
+                ${delta === null ? "-" : `${delta >= 0 ? "+" : ""}${currencyFormatter.format(delta)}`}
+              </strong>
+            </div>
           </div>
-        </div>
-      `)
+        `;
+      })
       .join("");
 
-    resultList.querySelectorAll(".result-btn").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        const index = parseInt(e.target.closest(".blackjack-result-entry").dataset.index);
-        const result = e.target.dataset.result;
-        blackjackState.participants[index].result = result;
-        renderBlackjackResultList();
+    resultList.querySelectorAll("[data-chip-result-index]").forEach((input) => {
+      input.addEventListener("input", (event) => {
+        const index = Number(event.target.dataset.chipResultIndex);
+        state.participants[index].finalChips = event.target.value;
+        const finalChips = parseNumber(event.target.value);
+        const deltaNode = event.target.closest(".chip-result-controls")?.querySelector(".chip-result-delta");
+
+        if (!deltaNode) {
+          return;
+        }
+
+        if (finalChips === null) {
+          deltaNode.textContent = "-";
+          deltaNode.classList.remove("positive", "negative");
+          return;
+        }
+
+        const delta = finalChips - state.participants[index].bet;
+        deltaNode.textContent = `${delta >= 0 ? "+" : ""}${currencyFormatter.format(delta)}`;
+        deltaNode.classList.toggle("positive", delta >= 0);
+        deltaNode.classList.toggle("negative", delta < 0);
       });
     });
   }
 
-  function updateBlackjackSummary() {
-    const totalBet = blackjackState.participants.reduce((sum, p) => sum + p.bet, 0);
-    const count = blackjackState.participants.length;
+  function updateChipGameSummary() {
+    const totalBet = state.participants.reduce((sum, participant) => sum + participant.bet, 0);
+    const totalChips = state.participants.reduce((sum, participant) => sum + participant.chips, 0);
 
-    summaryPlayers.textContent = count;
+    summaryPlayers.textContent = state.participants.length;
     summaryLocked.textContent = currencyFormatter.format(totalBet);
-    summaryRate.textContent = blackjackState.gameStarted ? "In corso" : "-";
+    summaryRate.textContent = `1€ = 1 fiche · ${integerFormatter.format(totalChips)} fiches`;
+    summaryStatus.textContent = state.gameStarted ? "In corso" : "Pronto";
+    finishBtn.disabled = !state.gameStarted;
   }
 }
